@@ -33,6 +33,7 @@ type SiteConfig struct {
 	AuthorURL   string `yaml:"author_url"`
 	License     string `yaml:"license"`
 	CNAME       string `yaml:"cname"`
+	RepoURL     string `yaml:"repo_url"`
 }
 
 type PathsConfig struct {
