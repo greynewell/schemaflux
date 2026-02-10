@@ -25,11 +25,15 @@ func NewGenerator(siteCfg config.SiteConfig, schemaCfg config.SchemaConfig) *Gen
 	}
 }
 
-// GenerateRecipeSchema generates Recipe JSON-LD for an entity.
+// GenerateRecipeSchema generates entity JSON-LD using the configured schema type.
 func (g *Generator) GenerateRecipeSchema(e *entity.Entity, entityURL string) map[string]interface{} {
+	schemaType := g.Schema.EntityType
+	if schemaType == "" {
+		schemaType = "Recipe"
+	}
 	schema := map[string]interface{}{
 		"@context":    "https://schema.org",
-		"@type":       "Recipe",
+		"@type":       schemaType,
 		"name":        e.GetString("title"),
 		"description": e.GetString("description"),
 		"url":         entityURL,
@@ -131,6 +135,149 @@ func (g *Generator) GenerateRecipeSchema(e *entity.Entity, entityURL string) map
 	return schema
 }
 
+// GenerateEntitySchema generates entity JSON-LD using SoftwareSourceCode.
+func (g *Generator) GenerateEntitySchema(e *entity.Entity, entityURL string) map[string]interface{} {
+	schemaType := g.Schema.EntityType
+	if schemaType == "" {
+		schemaType = "SoftwareSourceCode"
+	}
+	schema := map[string]interface{}{
+		"@context":    "https://schema.org",
+		"@type":       schemaType,
+		"name":        e.GetString("title"),
+		"description": e.GetString("description"),
+		"url":         entityURL,
+	}
+
+	// Programming language
+	if lang := e.GetString("language"); lang != "" {
+		schema["programmingLanguage"] = lang
+	}
+
+	// Code repository
+	if repoURL := e.GetString("repo_url"); repoURL != "" {
+		schema["codeRepository"] = repoURL
+	}
+
+	// Date published
+	if g.Schema.DatePublished != "" {
+		schema["datePublished"] = g.Schema.DatePublished
+	}
+
+	// Keywords
+	keywords := e.GetStringSlice("tags")
+	extra := g.Schema.ExtraKeywords
+	allKeywords := append(keywords, extra...)
+	if len(allKeywords) > 0 {
+		schema["keywords"] = strings.Join(allKeywords, ", ")
+	}
+
+	// Architecture map image
+	if archMap := e.GetString("arch_map"); archMap != "" {
+		imgURL := fmt.Sprintf("%s/images/%s-arch.svg", g.SiteConfig.BaseURL, e.Slug)
+		schema["image"] = imgURL
+		schema["thumbnailUrl"] = imgURL
+	}
+
+	// Relationships from graph_data
+	if graphRaw := e.GetString("graph_data"); graphRaw != "" {
+		g.addGraphRelationships(schema, e, graphRaw)
+	}
+
+	return schema
+}
+
+// graphDataJSON is the structure of the graph_data frontmatter field.
+type graphDataJSON struct {
+	Nodes []graphNodeJSON `json:"nodes"`
+	Edges []graphEdgeJSON `json:"edges"`
+}
+type graphNodeJSON struct {
+	ID    string `json:"id"`
+	Label string `json:"label"`
+	Type  string `json:"type"`
+	Slug  string `json:"slug"`
+}
+type graphEdgeJSON struct {
+	Source string `json:"source"`
+	Target string `json:"target"`
+	Type   string `json:"type"`
+}
+
+// addGraphRelationships parses graph_data and adds isPartOf, hasPart, and dependency to the schema.
+func (g *Generator) addGraphRelationships(s map[string]interface{}, e *entity.Entity, graphRaw string) {
+	var gd graphDataJSON
+	if err := json.Unmarshal([]byte(graphRaw), &gd); err != nil {
+		return
+	}
+
+	nodeByID := make(map[string]graphNodeJSON, len(gd.Nodes))
+	for _, n := range gd.Nodes {
+		nodeByID[n.ID] = n
+	}
+
+	var isPartOf []map[string]interface{}
+	var hasPart []map[string]interface{}
+	var dependencies []map[string]interface{}
+
+	for _, edge := range gd.Edges {
+		source := nodeByID[edge.Source]
+		target := nodeByID[edge.Target]
+
+		switch edge.Type {
+		case "belongsTo", "partOf":
+			// current entity belongs to target
+			if target.Slug != "" && target.Slug != e.Slug {
+				isPartOf = append(isPartOf, g.nodeToSchemaRef(target))
+			}
+		case "contains", "defines":
+			// current entity contains/defines target
+			if source.Slug == e.Slug && target.Slug != "" {
+				hasPart = append(hasPart, g.nodeToSchemaRef(target))
+			}
+			// or source defines current entity → current isPartOf source
+			if target.Slug == e.Slug && source.Slug != "" {
+				isPartOf = append(isPartOf, g.nodeToSchemaRef(source))
+			}
+		case "imports":
+			if source.Slug == e.Slug && target.Slug != "" {
+				dependencies = append(dependencies, g.nodeToSchemaRef(target))
+			}
+		case "calls":
+			if source.Slug == e.Slug && target.Slug != "" {
+				ref := g.nodeToSchemaRef(target)
+				ref["description"] = "Called by " + e.GetString("title")
+				hasPart = append(hasPart, ref)
+			}
+		case "extends":
+			if source.Slug == e.Slug && target.Slug != "" {
+				isPartOf = append(isPartOf, g.nodeToSchemaRef(target))
+			}
+		}
+	}
+
+	if len(isPartOf) == 1 {
+		s["isPartOf"] = isPartOf[0]
+	} else if len(isPartOf) > 1 {
+		s["isPartOf"] = isPartOf
+	}
+	if len(hasPart) > 0 {
+		s["hasPart"] = hasPart
+	}
+	if len(dependencies) > 0 {
+		s["dependency"] = dependencies
+	}
+}
+
+func (g *Generator) nodeToSchemaRef(n graphNodeJSON) map[string]interface{} {
+	ref := map[string]interface{}{
+		"@type": "SoftwareSourceCode",
+		"name":  n.Label,
+		"url":   fmt.Sprintf("%s/%s.html", g.SiteConfig.BaseURL, n.Slug),
+	}
+	return ref
+}
+
 // GenerateBreadcrumbSchema generates BreadcrumbList JSON-LD.
 func (g *Generator) GenerateBreadcrumbSchema(items []BreadcrumbItem) map[string]interface{} {
 	var listItems []map[string]interface{}
@@ -185,8 +332,8 @@ func (g *Generator) GenerateFAQSchema(faqs []entity.FAQ) map[string]interface{} 
 }
 
 // GenerateWebSiteSchema generates WebSite JSON-LD.
-func (g *Generator) GenerateWebSiteSchema() map[string]interface{} {
-	return map[string]interface{}{
+func (g *Generator) GenerateWebSiteSchema(imageURL string) map[string]interface{} {
+	s := map[string]interface{}{
 		"@context":    "https://schema.org",
 		"@type":       "WebSite",
 		"name":        g.SiteConfig.Name,
@@ -198,10 +345,14 @@ func (g *Generator) GenerateWebSiteSchema() map[string]interface{} {
 			"url":   g.SiteConfig.BaseURL,
 		},
 	}
+	if imageURL != "" {
+		s["image"] = imageURL
+	}
+	return s
 }
 
 // GenerateItemListSchema generates ItemList JSON-LD.
-func (g *Generator) GenerateItemListSchema(name, description string, items []ItemListEntry) map[string]interface{} {
+func (g *Generator) GenerateItemListSchema(name, description string, items []ItemListEntry, imageURL string) map[string]interface{} {
 	var listItems []map[string]interface{}
 	for i, item := range items {
 		listItems = append(listItems, map[string]interface{}{
@@ -212,7 +363,7 @@ func (g *Generator) GenerateItemListSchema(name, description string, items []Ite
 		})
 	}
 
-	return map[string]interface{}{
+	s := map[string]interface{}{
 		"@context":        "https://schema.org",
 		"@type":           "ItemList",
 		"name":            name,
@@ -220,6 +371,10 @@ func (g *Generator) GenerateItemListSchema(name, description string, items []Ite
 		"numberOfItems":   len(items),
 		"itemListElement": listItems,
 	}
+	if imageURL != "" {
+		s["image"] = imageURL
+	}
+	return s
 }
 
 // ItemListEntry is a single item in an ItemList.
@@ -229,7 +384,7 @@ type ItemListEntry struct {
 }
 
 // GenerateCollectionPageSchema generates CollectionPage JSON-LD.
-func (g *Generator) GenerateCollectionPageSchema(name, description, pageURL string, items []ItemListEntry) map[string]interface{} {
+func (g *Generator) GenerateCollectionPageSchema(name, description, pageURL string, items []ItemListEntry, imageURL string) map[string]interface{} {
 	var listItems []map[string]interface{}
 	for i, item := range items {
 		listItems = append(listItems, map[string]interface{}{
@@ -240,7 +395,7 @@ func (g *Generator) GenerateCollectionPageSchema(name, description, pageURL stri
 		})
 	}
 
-	return map[string]interface{}{
+	s := map[string]interface{}{
 		"@context":    "https://schema.org",
 		"@type":       "CollectionPage",
 		"name":        name,
@@ -252,6 +407,10 @@ func (g *Generator) GenerateCollectionPageSchema(name, description, pageURL stri
 			"itemListElement": listItems,
 		},
 	}
+	if imageURL != "" {
+		s["image"] = imageURL
+	}
+	return s
 }
 
 // MarshalSchemas encodes one or more schemas as a JSON-LD script block.

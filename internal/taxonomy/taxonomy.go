@@ -299,6 +299,52 @@ func LetterPageURL(taxonomyName, letter string) string {
 	return fmt.Sprintf("/%s/letter-%s.html", taxonomyName, l)
 }
 
+// ComputeAllEntitiesPagination calculates pagination for the all-entities listing.
+func ComputeAllEntitiesPagination(totalEntities, page, perPage int) PaginationInfo {
+	totalPages := (totalEntities + perPage - 1) / perPage
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
+	start := (page - 1) * perPage
+	end := start + perPage
+	if end > totalEntities {
+		end = totalEntities
+	}
+
+	info := PaginationInfo{
+		CurrentPage: page,
+		TotalPages:  totalPages,
+		TotalItems:  totalEntities,
+		StartIndex:  start,
+		EndIndex:    end,
+	}
+
+	for p := 1; p <= totalPages; p++ {
+		info.PageURLs = append(info.PageURLs, PageURL{
+			Number: p,
+			URL:    AllEntitiesPageURL(p),
+		})
+	}
+
+	if page > 1 {
+		info.PrevURL = AllEntitiesPageURL(page - 1)
+	}
+	if page < totalPages {
+		info.NextURL = AllEntitiesPageURL(page + 1)
+	}
+
+	return info
+}
+
+// AllEntitiesPageURL returns the URL path for an all-entities page.
+func AllEntitiesPageURL(page int) string {
+	if page == 1 {
+		return "/all/index.html"
+	}
+	return fmt.Sprintf("/all/page-%d.html", page)
+}
+
 // TopEntries returns the top N entries sorted by entity count (descending).
 func TopEntries(entries []Entry, n int) []Entry {
 	sorted := make([]Entry, len(entries))

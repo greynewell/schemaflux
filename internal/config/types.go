@@ -17,6 +17,7 @@ type Config struct {
 	Templates  TemplatesConfig  `yaml:"templates"`
 	Output     OutputConfig     `yaml:"output"`
 	Extra      ExtraConfig      `yaml:"extra"`
+	Search     SearchConfig     `yaml:"search"`
 
 	// ConfigDir is the directory containing the config file (set at load time).
 	ConfigDir string `yaml:"-"`
@@ -40,6 +41,7 @@ type PathsConfig struct {
 	Output    string `yaml:"output"`
 	Cache     string `yaml:"cache"`
 	Static    string `yaml:"static"`
+	SourceDir string `yaml:"source_dir"`
 }
 
 type DataConfig struct {
@@ -143,6 +145,7 @@ type TemplatesConfig struct {
 	Hub            string            `yaml:"hub"`
 	TaxonomyIndex  string            `yaml:"taxonomy_index"`
 	Letter         string            `yaml:"letter"`
+	AllEntities    string            `yaml:"all_entities"`
 	StaticPages    map[string]string `yaml:"static_pages"`
 }
 
@@ -153,7 +156,21 @@ type OutputConfig struct {
 	ExtractJS   string `yaml:"extract_js"`
 }
 
+type CTAConfig struct {
+	Enabled     bool   `yaml:"enabled"`
+	Heading     string `yaml:"heading"`
+	Description string `yaml:"description"`
+	ButtonText  string `yaml:"button_text"`
+	ButtonURL   string `yaml:"button_url"`
+}
+
 type ExtraConfig struct {
-	Favorites    string `yaml:"favorites"`
-	Contributors string `yaml:"contributors"`
+	Favorites    string    `yaml:"favorites"`
+	Contributors string    `yaml:"contributors"`
+	CTA          CTAConfig `yaml:"cta"`
+}
+
+type SearchConfig struct {
+	Enabled bool     `yaml:"enabled"`
+	Fields  []string `yaml:"fields"` // entity fields to index, default: ["title","description","node_type","language","domain","subdomain","tags"]
 }

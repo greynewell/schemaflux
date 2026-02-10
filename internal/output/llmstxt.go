@@ -29,7 +29,11 @@ func GenerateLlmsTxt(cfg *config.Config, entities []*entity.Entity, taxonomies [
 	if entityLabel == "" {
 		entityLabel = "Items"
 	}
-	lines = append(lines, fmt.Sprintf("## %ss", strings.Title(entityLabel)))
+	plural := strings.Title(entityLabel) + "s"
+	if strings.HasSuffix(strings.ToLower(entityLabel), "y") {
+		plural = strings.Title(entityLabel[:len(entityLabel)-1]) + "ies"
+	}
+	lines = append(lines, fmt.Sprintf("## %s", plural))
 
 	// Sort entities by title
 	sorted := make([]*entity.Entity, len(entities))

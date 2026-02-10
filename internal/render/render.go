@@ -33,10 +33,15 @@ type EntityPageContext struct {
 	AffiliateLinks  []affiliate.Link
 	CookModePrompt  string
 	JsonLD          template.HTML
+	OG              OGMeta
+	ChartData       template.JS
+	SourceCode      string
+	SourceLang      string
 	Taxonomies      []taxonomy.Taxonomy
 	AllTaxonomies   []taxonomy.Taxonomy
 	ValidSlugs      map[string]map[string]bool
 	Contributors    map[string]interface{}
+	CTA             config.CTAConfig
 }
 
 // HomepageContext is the template context for the homepage.
@@ -46,8 +51,12 @@ type HomepageContext struct {
 	Taxonomies    []taxonomy.Taxonomy
 	Favorites     []*entity.Entity
 	JsonLD        template.HTML
+	OG            OGMeta
+	ChartData     template.JS
+	ArchData      template.JS
 	EntityCount   int
 	Contributors  map[string]interface{}
+	CTA           config.CTAConfig
 }
 
 // HubPageContext is the template context for taxonomy hub (category) pages.
@@ -58,10 +67,13 @@ type HubPageContext struct {
 	Entities       []*entity.Entity
 	Pagination     taxonomy.PaginationInfo
 	JsonLD         template.HTML
+	OG             OGMeta
+	ChartData      template.JS
 	Breadcrumbs    []Breadcrumb
 	AllTaxonomies  []taxonomy.Taxonomy
 	Contributors   map[string]interface{}
 	ContributorProfile map[string]interface{}
+	CTA            config.CTAConfig
 }
 
 // TaxonomyIndexContext is the template context for taxonomy index pages.
@@ -74,8 +86,11 @@ type TaxonomyIndexContext struct {
 	HasLetters    bool
 	Letters       []string
 	JsonLD        template.HTML
+	OG            OGMeta
+	ChartData     template.JS
 	Breadcrumbs   []Breadcrumb
 	AllTaxonomies []taxonomy.Taxonomy
+	CTA           config.CTAConfig
 }
 
 // LetterPageContext is the template context for A-Z letter pages.
@@ -86,8 +101,26 @@ type LetterPageContext struct {
 	Entries       []taxonomy.Entry
 	Letters       []string
 	JsonLD        template.HTML
+	OG            OGMeta
+	ChartData     template.JS
 	Breadcrumbs   []Breadcrumb
 	AllTaxonomies []taxonomy.Taxonomy
+	CTA           config.CTAConfig
+}
+
+// AllEntitiesPageContext is the template context for the "all entities" paginated listing.
+type AllEntitiesPageContext struct {
+	Site          config.SiteConfig
+	Entities      []*entity.Entity
+	Pagination    taxonomy.PaginationInfo
+	JsonLD        template.HTML
+	OG            OGMeta
+	ChartData     template.JS
+	EntityCount   int
+	Breadcrumbs   []Breadcrumb
+	AllTaxonomies []taxonomy.Taxonomy
+	TotalEntities int
+	CTA           config.CTAConfig
 }
 
 // StaticPageContext is the template context for static pages.
@@ -98,6 +131,22 @@ type StaticPageContext struct {
 	JsonLD        template.HTML
 	Breadcrumbs   []Breadcrumb
 	AllTaxonomies []taxonomy.Taxonomy
+}
+
+// OGMeta holds Open Graph metadata for social sharing.
+type OGMeta struct {
+	Title       string
+	Description string
+	URL         string
+	ImageURL    string
+	Type        string // "website" for homepage, "article" for all others
+	SiteName    string
+}
+
+// NameCount is a label + count pair used for chart data.
+type NameCount struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
 }
 
 // Breadcrumb is a single breadcrumb entry.
@@ -171,6 +220,11 @@ func (e *Engine) RenderLetter(ctx LetterPageContext) (string, error) {
 	return e.render(templateName, ctx)
 }
 
+// RenderAllEntities renders an all-entities listing page.
+func (e *Engine) RenderAllEntities(ctx AllEntitiesPageContext) (string, error) {
+	return e.render(e.cfg.Templates.AllEntities, ctx)
+}
+
 // RenderStatic renders a static page.
 func (e *Engine) RenderStatic(templateName string, ctx StaticPageContext) (string, error) {
 	return e.render(templateName, ctx)
@@ -203,17 +257,18 @@ func (e *Engine) RenderCSS() (string, error) {
 	return buf.String(), nil
 }
 
-// RenderJS reads and returns the JS template content.
+// RenderJS reads and returns the JS file content.
+// Reads raw file to avoid html/template escaping JS operators like '<'.
 func (e *Engine) RenderJS() (string, error) {
-	t := e.tmpl.Lookup("_main.js")
-	if t == nil {
-		return "", nil
-	}
-	var buf bytes.Buffer
-	if err := t.Execute(&buf, nil); err != nil {
+	jsPath := filepath.Join(e.cfg.Paths.Templates, "_main.js")
+	data, err := os.ReadFile(jsPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
 		return "", err
 	}
-	return buf.String(), nil
+	return string(data), nil
 }
 
 // GenerateCookModePrompt builds a cook-with-AI prompt for a recipe.

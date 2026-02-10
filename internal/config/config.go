@@ -148,6 +148,9 @@ func resolvePaths(cfg *Config) {
 	if cfg.Paths.Static != "" {
 		cfg.Paths.Static = resolve(cfg.Paths.Static)
 	}
+	if cfg.Paths.SourceDir != "" {
+		cfg.Paths.SourceDir = resolve(cfg.Paths.SourceDir)
+	}
 	if cfg.Enrichment.CacheDir != "" {
 		cfg.Enrichment.CacheDir = resolve(cfg.Enrichment.CacheDir)
 	}

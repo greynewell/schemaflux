@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"math"
 	"net/url"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -270,6 +271,13 @@ func length(v interface{}) int {
 		return len(val)
 	case []map[string]interface{}:
 		return len(val)
+	default:
+		// Use reflect for any other slice/map/array/string types
+		rv := reflect.ValueOf(val)
+		switch rv.Kind() {
+		case reflect.Slice, reflect.Map, reflect.Array, reflect.String, reflect.Chan:
+			return rv.Len()
+		}
 	}
 	return 0
 }
