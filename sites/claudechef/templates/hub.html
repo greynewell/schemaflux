@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="{{.Site.Language}}">
+<head>
+{{template "_head.html"}}
+<title>{{.Entry.Name}} — {{.Taxonomy.Label}} — {{.Site.Name}}</title>
+<meta name="description" content="Browse {{.Entry.Name}} recipes from {{.Site.Name}}. Showing {{len .Entities}} of {{.Pagination.TotalItems}} recipes.">
+<meta property="og:title" content="{{.Entry.Name}} — {{.Site.Name}}">
+<meta property="og:description" content="Browse {{.Entry.Name}} recipes from {{.Site.Name}}.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{.Site.Name}}">
+{{$curPage := index .Pagination.PageURLs (sub .Pagination.CurrentPage 1)}}<link rel="canonical" href="{{.Site.BaseURL}}{{$curPage.URL}}">
+{{.JsonLD}}
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+{{template "_header.html"}}
+<main id="main">
+  {{/* Breadcrumbs */}}
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    {{range $i, $bc := .Breadcrumbs}}{{if $i}} › {{end}}{{if $bc.URL}}<a href="{{$bc.URL}}">{{$bc.Name}}</a>{{else}}<span>{{$bc.Name}}</span>{{end}}{{end}}
+  </nav>
+
+  <h1>{{.Entry.Name}}</h1>
+  <p class="hub-subheading">
+    {{if gt .Pagination.TotalPages 1}}Showing {{add .Pagination.StartIndex 1}}–{{.Pagination.EndIndex}} of {{formatNumber .Pagination.TotalItems}} recipes
+    {{else}}{{formatNumber .Pagination.TotalItems}} recipe{{if ne .Pagination.TotalItems 1}}s{{end}}
+    {{end}}
+  </p>
+
+  {{/* Contributor profile (for author taxonomy) */}}
+  {{if .ContributorProfile}}
+  <div class="contributor-profile card">
+    {{if index .ContributorProfile "bio"}}<p>{{index .ContributorProfile "bio"}}</p>{{end}}
+    <div class="contributor-links">
+      {{if index .ContributorProfile "github"}}<a href="https://github.com/{{index .ContributorProfile "github"}}" target="_blank" rel="noopener">GitHub</a>{{end}}
+      {{if index .ContributorProfile "twitter"}}<a href="https://twitter.com/{{index .ContributorProfile "twitter"}}" target="_blank" rel="noopener">Twitter</a>{{end}}
+      {{if index .ContributorProfile "website"}}<a href="{{index .ContributorProfile "website"}}" target="_blank" rel="noopener">Website</a>{{end}}
+    </div>
+  </div>
+  {{end}}
+
+  {{/* Recipe grid */}}
+  <div class="recipe-grid">
+    {{range .Entities}}
+    {{template "_recipe_card.html" .}}
+    {{end}}
+  </div>
+
+  {{/* Pagination */}}
+  {{if gt .Pagination.TotalPages 1}}
+  <nav class="pagination" aria-label="Pagination">
+    {{if .Pagination.PrevURL}}<a href="{{.Pagination.PrevURL}}" class="pagination-link">← Previous</a>{{end}}
+    <div class="pagination-pages">
+      {{range .Pagination.PageURLs}}
+      {{if eq .Number $.Pagination.CurrentPage}}<span class="pagination-link current">{{.Number}}</span>
+      {{else}}<a href="{{.URL}}" class="pagination-link">{{.Number}}</a>{{end}}
+      {{end}}
+    </div>
+    {{if .Pagination.NextURL}}<a href="{{.Pagination.NextURL}}" class="pagination-link">Next →</a>{{end}}
+  </nav>
+  {{end}}
+
+</main>
+{{template "_footer.html" .}}
+<script src="/main.js" defer></script>
+</body>
+</html>

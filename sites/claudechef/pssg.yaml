@@ -1,0 +1,217 @@
+site:
+  name: "Claude Chef"
+  base_url: "https://claudechef.com"
+  description: "Delicious, tested recipes with AI-powered cooking guidance."
+  language: "en"
+  version: "0.3.0"
+  author: "Grey Newell"
+  author_url: "https://greynewell.com"
+  license: "MIT"
+  cname: "claudechef.com"
+
+paths:
+  data: "/Users/grey/Projects/claude-chef/recipes"
+  templates: "templates"
+  output: "/Users/grey/Projects/new1/docs"
+  cache: "/Users/grey/Projects/claude-chef/.cache"
+  static: ""
+
+data:
+  format: "markdown"
+  entity_type: "recipe"
+  entity_slug:
+    source: "filename"
+  body_sections:
+    - name: "ingredients"
+      header: "Ingredients"
+      type: "unordered_list"
+    - name: "instructions"
+      header: "Instructions"
+      type: "ordered_list"
+    - name: "faqs"
+      header: "Frequently Asked Questions"
+      type: "faq"
+
+taxonomies:
+  - name: "category"
+    label: "Categories"
+    label_singular: "Category"
+    field: "recipe_category"
+    multi_value: false
+    min_entities: 1
+    letter_page_threshold: 50
+    hub_title: "{{.Name}} Recipes"
+    hub_meta_description: "Browse {{.Name}} recipes from Claude Chef."
+    index_description: "Browse by meal type — main courses, sides, desserts, and more."
+
+  - name: "cuisine"
+    label: "Cuisines"
+    label_singular: "Cuisine"
+    field: "cuisine"
+    multi_value: false
+    min_entities: 1
+    letter_page_threshold: 50
+    hub_title: "{{.Name}} Recipes"
+    hub_meta_description: "Explore {{.Name}} recipes from Claude Chef."
+    index_description: "Explore dishes from cuisines around the world."
+
+  - name: "ingredient"
+    label: "Ingredients"
+    label_singular: "Ingredient"
+    field: "recipe_ingredients"
+    multi_value: true
+    min_entities: 3
+    letter_page_threshold: 50
+    enrichment_override_field: "ingredients[].normalizedName"
+    hub_title: "Recipes with {{.Name}}"
+    hub_meta_description: "Find recipes with {{.Name}} from Claude Chef."
+    index_description: "Find recipes by key ingredient."
+
+  - name: "flavor"
+    label: "Flavors"
+    label_singular: "Flavor"
+    field: "flavors"
+    multi_value: true
+    min_entities: 1
+    letter_page_threshold: 50
+    hub_title: "{{.Name}} Recipes"
+    hub_meta_description: "Find {{.Name}} recipes from Claude Chef."
+    index_description: "Find recipes by flavor profile."
+
+  - name: "tool"
+    label: "Tools"
+    label_singular: "Tool"
+    field: "tools"
+    multi_value: true
+    min_entities: 1
+    letter_page_threshold: 50
+    hub_title: "Recipes Using a {{.Name}}"
+    hub_meta_description: "Find recipes using a {{.Name}} from Claude Chef."
+    index_description: "Find recipes by kitchen tool."
+
+  - name: "skill_level"
+    label: "Skill Levels"
+    label_singular: "Skill Level"
+    field: "skill_level"
+    multi_value: false
+    min_entities: 1
+    letter_page_threshold: 50
+    hub_title: "{{.Name}} Recipes"
+    hub_meta_description: "Browse {{.Name}} recipes from Claude Chef."
+    index_description: "Browse recipes by difficulty level."
+
+  - name: "author"
+    label: "Contributors"
+    label_singular: "Contributor"
+    field: "author"
+    multi_value: false
+    min_entities: 1
+    letter_page_threshold: 50
+    hub_title: "Recipes by {{.Name}}"
+    hub_meta_description: "Browse recipes contributed by {{.Name}} on Claude Chef."
+    index_description: "Browse recipes by contributor."
+
+pagination:
+  entities_per_page: 48
+
+structured_data:
+  entity_type: "Recipe"
+  field_mappings:
+    name: "title"
+    description: "description"
+    author: "author"
+    prepTime: "prep_time"
+    cookTime: "cook_time"
+    recipeYield: "servings"
+    recipeCategory: "recipe_category"
+    recipeCuisine: "cuisine"
+    calories: "calories"
+    image: "image"
+    keywords: "keywords"
+  extra_keywords:
+    - "Claude Chef"
+    - "AI Cooking"
+    - "Home Cooking"
+  date_published: "2025-01-01"
+  homepage_schemas:
+    - "WebSite"
+    - "ItemList"
+  entity_schemas:
+    - "Recipe"
+    - "BreadcrumbList"
+    - "FAQPage"
+  hub_schemas:
+    - "CollectionPage"
+    - "BreadcrumbList"
+  index_schemas:
+    - "ItemList"
+    - "BreadcrumbList"
+
+affiliates:
+  providers:
+    - name: "Amazon"
+      url_template: "https://www.amazon.com/s?k={{term}}&tag={{tag}}"
+      env_var: "AMAZON_AFFILIATE_TAG"
+    - name: "Walmart"
+      url_template: "https://www.walmart.com/search?q={{term}}"
+      always_include: true
+  search_term_paths:
+    - "ingredients[].searchTerm"
+    - "gear[].searchTerm"
+
+enrichment:
+  cache_dir: "/Users/grey/Projects/claude-chef/.cache"
+  ingredient_override_field: "ingredients[].normalizedName"
+
+sitemap:
+  max_urls_per_file: 50000
+  priorities:
+    homepage: "1.0"
+    entity: "0.8"
+    taxonomy_index: "0.7"
+    hub_page_1: "0.6"
+    hub_page_n: "0.4"
+    letter_page: "0.5"
+  change_freqs:
+    homepage: "daily"
+    entity: "weekly"
+    taxonomy_index: "weekly"
+    hub: "weekly"
+    letter_page: "weekly"
+
+rss:
+  enabled: true
+  main_feed: "feed.xml"
+  category_feeds: true
+  category_taxonomy: "category"
+
+robots:
+  allow_all: true
+  extra_bots:
+    - "GPTBot"
+    - "ClaudeBot"
+    - "PerplexityBot"
+
+llms_txt:
+  enabled: true
+  tagline: "Delicious, tested recipes with AI-powered cooking guidance."
+  taxonomies:
+    - "category"
+    - "cuisine"
+
+templates:
+  entity: "recipe.html"
+  homepage: "index.html"
+  hub: "hub.html"
+  taxonomy_index: "taxonomy_index.html"
+  letter: "letter.html"
+
+output:
+  clean_build: false
+  minify: false
+  extract_css: "styles.css"
+  extract_js: "main.js"
+
+extra:
+  favorites: "/Users/grey/Projects/claude-chef/favorites.json"
+  contributors: "/Users/grey/Projects/claude-chef/contributors.json"

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="{{.Site.Language}}">
+<head>
+{{template "_head.html"}}
+<title>{{.Site.Name}} — {{.Site.Description}}</title>
+<meta name="description" content="{{.Site.Description}}">
+<meta property="og:title" content="{{.Site.Name}}">
+<meta property="og:description" content="{{.Site.Description}}">
+<meta property="og:url" content="{{.Site.BaseURL}}/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{.Site.Name}}">
+<link rel="canonical" href="{{.Site.BaseURL}}/">
+{{.JsonLD}}
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+{{template "_header.html"}}
+<main id="main">
+  {{/* Hero */}}
+  <div class="hero card">
+    <h1>{{.Site.Name}}</h1>
+    <p>{{.Site.Description}} Browse {{formatNumber .EntityCount}} recipes with step-by-step instructions, ingredient lists, and AI cooking guidance.</p>
+    <p><a href="/contribute.html" class="btn btn-primary">Contribute a Recipe</a></p>
+  </div>
+
+  {{/* Browse Recipes - taxonomy pills */}}
+  <section class="browse-section">
+    <h2>Browse Recipes</h2>
+    <div class="taxonomy-pills">
+      {{range .Taxonomies}}
+      <a href="/{{.Name}}/" class="meta-pill tax-{{.Name}}">{{.Label}} ({{len .Entries}})</a>
+      {{end}}
+    </div>
+  </section>
+
+  {{/* Favorites */}}
+  {{if .Favorites}}
+  <section class="favorites-section">
+    <h2>Our Favorites</h2>
+    <div class="recipe-grid">
+      {{range .Favorites}}
+      {{template "_recipe_card.html" .}}
+      {{end}}
+    </div>
+  </section>
+  {{end}}
+
+  {{/* Category showcases */}}
+  {{range .Taxonomies}}
+  {{if eq .Name "category"}}
+  {{range .Entries}}
+  {{if ge (len .Entities) 4}}
+  <section class="category-showcase">
+    <h2>{{.Name}}</h2>
+    <div class="recipe-grid">
+      {{range $i, $e := .Entities}}{{if lt $i 4}}
+      {{template "_recipe_card.html" $e}}
+      {{end}}{{end}}
+    </div>
+    <p><a href="/category/{{.Slug}}.html" class="see-all-link">See all {{len .Entities}} {{.Name}} recipes →</a></p>
+  </section>
+  {{end}}
+  {{end}}
+  {{end}}
+  {{end}}
+
+</main>
+{{template "_footer.html" .}}
+<script src="/main.js" defer></script>
+</body>
+</html>
