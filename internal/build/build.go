@@ -148,6 +148,52 @@ func (b *Builder) Build() error {
 	// Track category taxonomy entries for RSS
 	categoryEntries := make(map[string][]*entity.Entity)
 
+	// 10b. Pre-enrich graph_data nodes (sequential — avoids concurrent map writes)
+	for _, e := range entities {
+		graphJSON := e.GetString("graph_data")
+		if graphJSON == "" {
+			continue
+		}
+		var graphObj struct {
+			Nodes []map[string]interface{} `json:"nodes"`
+			Edges []struct {
+				Source string `json:"source"`
+				Target string `json:"target"`
+				Type   string `json:"type"`
+			} `json:"edges"`
+		}
+		if json.Unmarshal([]byte(graphJSON), &graphObj) != nil {
+			continue
+		}
+		changed := false
+		for i, node := range graphObj.Nodes {
+			if slugVal, ok := node["slug"].(string); ok && slugVal != "" {
+				if ref, found := slugMap[slugVal]; found {
+					if lc := ref.GetInt("line_count"); lc > 0 {
+						graphObj.Nodes[i]["lc"] = lc
+						changed = true
+					}
+					if lang := ref.GetString("language"); lang != "" {
+						graphObj.Nodes[i]["lang"] = lang
+						changed = true
+					}
+					if cc := ref.GetInt("call_count"); cc > 0 {
+						graphObj.Nodes[i]["cc"] = cc
+						changed = true
+					}
+					if cbc := ref.GetInt("called_by_count"); cbc > 0 {
+						graphObj.Nodes[i]["cbc"] = cbc
+						changed = true
+					}
+				}
+			}
+		}
+		if changed {
+			enrichedGraph, _ := json.Marshal(graphObj)
+			e.Fields["graph_data"] = string(enrichedGraph)
+		}
+	}
+
 	// 11. Render entity pages (concurrent)
 	log.Printf("Rendering %d entity pages...", len(entities))
 	var entityErrors int64
@@ -392,7 +438,8 @@ func (b *Builder) renderEntityPage(
 	if v := e.GetInt("type_count"); v > 0 { chartMap["tc"] = v }
 	if v := e.GetInt("file_count"); v > 0 { chartMap["fc"] = v }
 
-	// Enrich graph_data: add lineCount/language to nodes, count edge types
+	// Enrich graph_data: count edge types for chart
+	// (Node enrichment is done in a sequential pre-pass to avoid concurrent map access)
 	if graphJSON := e.GetString("graph_data"); graphJSON != "" {
 		var graphObj struct {
 			Nodes []map[string]interface{} `json:"nodes"`
@@ -403,30 +450,6 @@ func (b *Builder) renderEntityPage(
 			} `json:"edges"`
 		}
 		if json.Unmarshal([]byte(graphJSON), &graphObj) == nil {
-			// Enrich nodes with metadata from slugMap
-			for i, node := range graphObj.Nodes {
-				if slugVal, ok := node["slug"].(string); ok && slugVal != "" {
-					if ref, found := slugMap[slugVal]; found {
-						if lc := ref.GetInt("line_count"); lc > 0 {
-							graphObj.Nodes[i]["lc"] = lc
-						}
-						if lang := ref.GetString("language"); lang != "" {
-							graphObj.Nodes[i]["lang"] = lang
-						}
-						if cc := ref.GetInt("call_count"); cc > 0 {
-							graphObj.Nodes[i]["cc"] = cc
-						}
-						if cbc := ref.GetInt("called_by_count"); cbc > 0 {
-							graphObj.Nodes[i]["cbc"] = cbc
-						}
-					}
-				}
-			}
-			// Write enriched graph back
-			enrichedGraph, _ := json.Marshal(graphObj)
-			e.Fields["graph_data"] = string(enrichedGraph)
-
-			// Edge type counts for chart
 			etCounts := make(map[string]int)
 			for _, edge := range graphObj.Edges {
 				etCounts[edge.Type]++
