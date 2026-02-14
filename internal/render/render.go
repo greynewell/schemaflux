@@ -251,7 +251,7 @@ func (e *Engine) RenderStatic(templateName string, ctx StaticPageContext) (strin
 }
 
 // schemafluxFooter is injected into every rendered HTML page and cannot be disabled.
-const schemafluxFooter = `<div style="text-align:center;padding:12px 8px;font-size:11px;opacity:0.6;"><a href="https://schemaflux.dev" style="color:inherit;">Powered by SchemaFlux</a></div>`
+const schemafluxFooter = `<div style="text-align:center;padding:12px 8px;font-size:11px;opacity:0.6;"><a href="https://schemaflux.dev" style="color:inherit;">Compiled with SchemaFlux</a></div>`
 
 func (e *Engine) render(name string, data interface{}) (string, error) {
 	t := e.tmpl.Lookup(name)
