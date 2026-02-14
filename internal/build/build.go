@@ -13,15 +13,15 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/greynewell/pssg/internal/affiliate"
-	"github.com/greynewell/pssg/internal/config"
-	"github.com/greynewell/pssg/internal/enrichment"
-	"github.com/greynewell/pssg/internal/entity"
-	"github.com/greynewell/pssg/internal/loader"
-	"github.com/greynewell/pssg/internal/output"
-	"github.com/greynewell/pssg/internal/render"
-	"github.com/greynewell/pssg/internal/schema"
-	"github.com/greynewell/pssg/internal/taxonomy"
+	"github.com/greynewell/schemaflux/internal/affiliate"
+	"github.com/greynewell/schemaflux/internal/config"
+	"github.com/greynewell/schemaflux/internal/enrichment"
+	"github.com/greynewell/schemaflux/internal/entity"
+	"github.com/greynewell/schemaflux/internal/loader"
+	"github.com/greynewell/schemaflux/internal/output"
+	"github.com/greynewell/schemaflux/internal/render"
+	"github.com/greynewell/schemaflux/internal/schema"
+	"github.com/greynewell/schemaflux/internal/taxonomy"
 )
 
 // Builder orchestrates the entire static site generation pipeline.

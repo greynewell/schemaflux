@@ -4,8 +4,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/greynewell/pssg/internal/config"
-	"github.com/greynewell/pssg/internal/entity"
+	"github.com/greynewell/schemaflux/internal/config"
+	"github.com/greynewell/schemaflux/internal/entity"
 )
 
 // SortEntities sorts entities according to the sort config.

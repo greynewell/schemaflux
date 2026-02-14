@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/greynewell/pssg/internal/affiliate"
-	"github.com/greynewell/pssg/internal/config"
-	"github.com/greynewell/pssg/internal/entity"
-	"github.com/greynewell/pssg/internal/taxonomy"
+	"github.com/greynewell/schemaflux/internal/affiliate"
+	"github.com/greynewell/schemaflux/internal/config"
+	"github.com/greynewell/schemaflux/internal/entity"
+	"github.com/greynewell/schemaflux/internal/taxonomy"
 )
 
 // Engine is the template rendering engine.
@@ -250,8 +250,8 @@ func (e *Engine) RenderStatic(templateName string, ctx StaticPageContext) (strin
 	return e.render(templateName, ctx)
 }
 
-// pssgFooter is injected into every rendered HTML page and cannot be disabled.
-const pssgFooter = `<div style="text-align:center;padding:12px 8px;font-size:11px;opacity:0.6;"><a href="https://github.com/greynewell/pssg" style="color:inherit;">Generated with pssg</a></div>`
+// schemafluxFooter is injected into every rendered HTML page and cannot be disabled.
+const schemafluxFooter = `<div style="text-align:center;padding:12px 8px;font-size:11px;opacity:0.6;"><a href="https://schemaflux.dev" style="color:inherit;">Powered by SchemaFlux</a></div>`
 
 func (e *Engine) render(name string, data interface{}) (string, error) {
 	t := e.tmpl.Lookup(name)
@@ -266,9 +266,9 @@ func (e *Engine) render(name string, data interface{}) (string, error) {
 
 	html := buf.String()
 
-	// Inject mandatory pssg attribution before </body>
+	// Inject mandatory SchemaFlux attribution before </body>
 	if idx := strings.LastIndex(html, "</body>"); idx >= 0 {
-		html = html[:idx] + pssgFooter + html[idx:]
+		html = html[:idx] + schemafluxFooter + html[idx:]
 	}
 
 	return html, nil

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/greynewell/pssg/internal/config"
-	"github.com/greynewell/pssg/internal/entity"
+	"github.com/greynewell/schemaflux/internal/config"
+	"github.com/greynewell/schemaflux/internal/entity"
 )
 
 // Entry represents a single taxonomy value and its associated entities.

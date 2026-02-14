@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/greynewell/pssg/internal/entity"
+	"github.com/greynewell/schemaflux/internal/entity"
 )
 
 var headingRegex = regexp.MustCompile(`(?m)^(#{2,6})\s+(.+)$`)

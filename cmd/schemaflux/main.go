@@ -7,17 +7,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/greynewell/pssg/internal/build"
-	"github.com/greynewell/pssg/internal/config"
+	"github.com/greynewell/schemaflux/internal/build"
+	"github.com/greynewell/schemaflux/internal/config"
 )
 
 func main() {
 	buildCmd := flag.NewFlagSet("build", flag.ExitOnError)
-	configPath := buildCmd.String("config", "pssg.yaml", "Path to config file")
+	configPath := buildCmd.String("config", "schemaflux.yaml", "Path to config file")
 	force := buildCmd.Bool("force", false, "Force full rebuild (ignore cache)")
 
 	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "Usage: pssg <command> [flags]\n\nCommands:\n  build    Build the static site\n")
+		fmt.Fprintf(os.Stderr, "Usage: schemaflux <command> [flags]\n\nCommands:\n  build    Build the static site\n")
 		os.Exit(1)
 	}
 

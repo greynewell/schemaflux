@@ -1,4 +1,4 @@
-// Package yaml implements a minimal YAML parser sufficient for pssg config
+// Package yaml implements a minimal YAML parser sufficient for schemaflux config
 // files and markdown frontmatter. It supports key-value pairs, nested maps,
 // lists of scalars, lists of maps, quoted strings, comments, booleans,
 // integers, and floats. It does NOT support anchors, aliases, multi-line

@@ -1,3 +1,3 @@
-module github.com/greynewell/pssg
+module github.com/greynewell/schemaflux
 
 go 1.25.7

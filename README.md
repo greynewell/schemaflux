@@ -1,12 +1,14 @@
-# pssg
+# SchemaFlux
 
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Dependencies](https://img.shields.io/badge/Dependencies-0-brightgreen)](#)
 
-**Programmatic SEO site generator.** A fast, opinionated static site generator for structured data.
+**Unified Schema Transformation Pipeline | The Data-to-View Compiler**
 
-**Zero external dependencies** — pssg uses only the Go standard library.
+A fast, zero-dependency static site generator and structured data transformation engine. SchemaFlux compiles schema-driven content into deterministic, type-safe views.
+
+**Zero external dependencies** — SchemaFlux uses only the Go standard library.
 - Single static binary, compiles anywhere Go does
 - No supply-chain risk from third-party modules
 - Smaller binary, faster builds
@@ -17,7 +19,7 @@
 
 ## Why
 
-Most static site generators are built for blogs. pssg is built for **structured datasets** — collections of entities with rich metadata, taxonomies, and relationships. Feed it a directory of markdown files with frontmatter and a YAML config, and it generates a full site with:
+Most static site generators are built for blogs. SchemaFlux is built for **structured datasets** — collections of entities with rich metadata, taxonomies, and relationships. Feed it a directory of markdown files with frontmatter and a YAML config, and it generates a full site with:
 
 - Taxonomy pages with automatic categorization and pagination
 - A-Z letter indices
@@ -25,19 +27,19 @@ Most static site generators are built for blogs. pssg is built for **structured 
 - D3.js chart data for visualizations
 - SEO: sitemaps, robots.txt, JSON-LD, Open Graph, `llms.txt`
 - RSS feeds
-- Enrichment data (cooking tips, FAQs, etc.) via JSON sidecar files
+- Enrichment data via JSON sidecar files
 
 ## Quick Start
 
 ```bash
-go install github.com/greynewell/pssg/cmd/pssg@latest
+go install github.com/greynewell/schemaflux/cmd/schemaflux@latest
 
-pssg build --config pssg.yaml
+schemaflux build --config schemaflux.yaml
 ```
 
 ## Config
 
-pssg is driven by a single `pssg.yaml`:
+SchemaFlux is driven by a single `schemaflux.yaml`:
 
 ```yaml
 site:
@@ -63,7 +65,7 @@ templates:
 ## Architecture
 
 ```
-cmd/pssg/          CLI entrypoint
+cmd/schemaflux/    CLI entrypoint
 internal/
   build/           Build pipeline orchestration
   config/          YAML config parsing

@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/greynewell/pssg/internal/config"
-	"github.com/greynewell/pssg/internal/yaml"
-	"github.com/greynewell/pssg/internal/entity"
+	"github.com/greynewell/schemaflux/internal/config"
+	"github.com/greynewell/schemaflux/internal/yaml"
+	"github.com/greynewell/schemaflux/internal/entity"
 )
 
 // MarkdownLoader loads entities from markdown files with YAML frontmatter.

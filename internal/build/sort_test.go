@@ -3,8 +3,8 @@ package build
 import (
 	"testing"
 
-	"github.com/greynewell/pssg/internal/config"
-	"github.com/greynewell/pssg/internal/entity"
+	"github.com/greynewell/schemaflux/internal/config"
+	"github.com/greynewell/schemaflux/internal/entity"
 )
 
 func makeEntity(slug string, fields map[string]interface{}) *entity.Entity {

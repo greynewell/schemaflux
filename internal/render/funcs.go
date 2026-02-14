@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/greynewell/pssg/internal/entity"
-	"github.com/greynewell/pssg/internal/markdown"
+	"github.com/greynewell/schemaflux/internal/entity"
+	"github.com/greynewell/schemaflux/internal/markdown"
 )
 
 // BuildFuncMap creates the template FuncMap with all helper functions.

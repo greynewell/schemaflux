@@ -9,7 +9,7 @@ import (
 )
 
 // TestZeroDependencies enforces that go.mod contains no require directives.
-// pssg uses only the Go standard library. See AGENTS.md for rationale.
+// schemaflux uses only the Go standard library. See AGENTS.md for rationale.
 func TestZeroDependencies(t *testing.T) {
 	// Walk up from the test file to find the module root (directory containing go.mod).
 	_, thisFile, _, _ := runtime.Caller(0)
@@ -33,7 +33,7 @@ func TestZeroDependencies(t *testing.T) {
 	for _, line := range strings.Split(string(data), "\n") {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmed, "require ") || trimmed == "require (" {
-			t.Fatalf("go.mod contains a require directive — pssg must have zero external dependencies.\nLine: %s", trimmed)
+			t.Fatalf("go.mod contains a require directive — schemaflux must have zero external dependencies.\nLine: %s", trimmed)
 		}
 	}
 }

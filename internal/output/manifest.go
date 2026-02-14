@@ -3,7 +3,7 @@ package output
 import (
 	"encoding/json"
 
-	"github.com/greynewell/pssg/internal/config"
+	"github.com/greynewell/schemaflux/internal/config"
 )
 
 // GenerateManifest generates a PWA manifest.json.

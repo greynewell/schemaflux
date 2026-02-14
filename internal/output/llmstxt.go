@@ -5,9 +5,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greynewell/pssg/internal/config"
-	"github.com/greynewell/pssg/internal/entity"
-	"github.com/greynewell/pssg/internal/taxonomy"
+	"github.com/greynewell/schemaflux/internal/config"
+	"github.com/greynewell/schemaflux/internal/entity"
+	"github.com/greynewell/schemaflux/internal/taxonomy"
 )
 
 // GenerateLlmsTxt generates an llms.txt file in the llmstxt.org format.

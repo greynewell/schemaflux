@@ -478,10 +478,10 @@ cuisine: Indian
 	}
 }
 
-// ---------- Full pssg.yaml integration test ----------
+// ---------- Full schemaflux.yaml integration test ----------
 
-func TestFullPssgConfig(t *testing.T) {
-	// Minimal reproduction of the actual pssg.yaml structure.
+func TestFullSchemafluxConfig(t *testing.T) {
+	// Minimal reproduction of the actual schemaflux.yaml structure.
 	input := `
 site:
   name: "Claude Chef"

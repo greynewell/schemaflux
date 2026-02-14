@@ -1,6 +1,6 @@
 package config
 
-// Config is the top-level pssg configuration loaded from YAML.
+// Config is the top-level schemaflux configuration loaded from YAML.
 type Config struct {
 	Site            SiteConfig          `yaml:"site"`
 	Paths           PathsConfig         `yaml:"paths"`

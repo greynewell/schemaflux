@@ -1,10 +1,10 @@
 # AGENTS.md
 
-Guidelines for AI agents and contributors working on pssg.
+Guidelines for AI agents and contributors working on SchemaFlux.
 
 ## Hard Rules
 
-1. **Zero external dependencies.** pssg uses only the Go standard library. Do not add any `require` directives to `go.mod`. This is enforced by a unit test (`TestZeroDependencies`). YAML parsing and markdown rendering are implemented internally.
+1. **Zero external dependencies.** SchemaFlux uses only the Go standard library. Do not add any `require` directives to `go.mod`. This is enforced by a unit test (`TestZeroDependencies`). YAML parsing and markdown rendering are implemented internally.
 
 2. **Test-first.** Write failing tests before implementing features. All new code must have unit tests.
 

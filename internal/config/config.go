@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/greynewell/pssg/internal/yaml"
+	"github.com/greynewell/schemaflux/internal/yaml"
 )
 
 // Load reads and parses a YAML config file, applies defaults, and validates.

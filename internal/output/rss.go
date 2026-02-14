@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/greynewell/pssg/internal/config"
-	"github.com/greynewell/pssg/internal/entity"
+	"github.com/greynewell/schemaflux/internal/config"
+	"github.com/greynewell/schemaflux/internal/entity"
 )
 
 type rssDoc struct {

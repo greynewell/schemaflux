@@ -3,9 +3,9 @@ package build
 import (
 	"sort"
 
-	"github.com/greynewell/pssg/internal/config"
-	"github.com/greynewell/pssg/internal/entity"
-	"github.com/greynewell/pssg/internal/taxonomy"
+	"github.com/greynewell/schemaflux/internal/config"
+	"github.com/greynewell/schemaflux/internal/entity"
+	"github.com/greynewell/schemaflux/internal/taxonomy"
 )
 
 // ComputeRelated computes related entities for each entity based on shared taxonomy values.

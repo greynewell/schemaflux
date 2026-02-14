@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/greynewell/pssg/internal/config"
+	"github.com/greynewell/schemaflux/internal/config"
 )
 
 // GenerateRobotsTxt generates a robots.txt file.

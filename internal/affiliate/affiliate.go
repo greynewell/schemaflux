@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/greynewell/pssg/internal/config"
+	"github.com/greynewell/schemaflux/internal/config"
 )
 
 // Link represents a single affiliate link.

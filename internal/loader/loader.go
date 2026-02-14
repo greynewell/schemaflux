@@ -1,8 +1,8 @@
 package loader
 
 import (
-	"github.com/greynewell/pssg/internal/config"
-	"github.com/greynewell/pssg/internal/entity"
+	"github.com/greynewell/schemaflux/internal/config"
+	"github.com/greynewell/schemaflux/internal/entity"
 )
 
 // Loader is the interface for loading entities from data files.
