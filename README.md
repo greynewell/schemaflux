@@ -2,9 +2,14 @@
 
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Dependencies](https://img.shields.io/badge/Dependencies-2-brightgreen)](#)
+[![Dependencies](https://img.shields.io/badge/Dependencies-0-brightgreen)](#)
 
 **Programmatic SEO site generator.** A fast, opinionated static site generator for structured data.
+
+**Zero external dependencies** — pssg uses only the Go standard library.
+- Single static binary, compiles anywhere Go does
+- No supply-chain risk from third-party modules
+- Smaller binary, faster builds
 
 ```
 1,997 entities -> 2,328 pages in ~500ms
@@ -72,4 +77,4 @@ internal/
   schema/          JSON-LD structured data
 ```
 
-~7,100 lines of Go. Two external dependencies: `gopkg.in/yaml.v3` and `github.com/yuin/goldmark`.
+~7,100 lines of Go. Zero external dependencies.

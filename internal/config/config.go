@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/yaml.v3"
+	"github.com/greynewell/pssg/internal/yaml"
 )
 
 // Load reads and parses a YAML config file, applies defaults, and validates.

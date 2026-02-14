@@ -6,9 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/greynewell/pssg/internal/config"
+	"github.com/greynewell/pssg/internal/yaml"
 	"github.com/greynewell/pssg/internal/entity"
 )
 
@@ -58,8 +57,8 @@ func (l *MarkdownLoader) parseFile(path string) (*entity.Entity, error) {
 	}
 
 	// Parse YAML frontmatter
-	var fields map[string]interface{}
-	if err := yaml.Unmarshal([]byte(frontmatter), &fields); err != nil {
+	fields, err := yaml.UnmarshalMap([]byte(frontmatter))
+	if err != nil {
 		return nil, fmt.Errorf("parsing frontmatter YAML: %w", err)
 	}
 

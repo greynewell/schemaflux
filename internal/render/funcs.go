@@ -1,7 +1,6 @@
 package render
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -13,8 +12,7 @@ import (
 	"strings"
 
 	"github.com/greynewell/pssg/internal/entity"
-	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/renderer/html"
+	"github.com/greynewell/pssg/internal/markdown"
 )
 
 // BuildFuncMap creates the template FuncMap with all helper functions.
@@ -661,19 +659,10 @@ func wordCountFunc(v interface{}) int {
 	return WordCount(s)
 }
 
-// renderMarkdown converts a raw markdown string to HTML using goldmark.
+// renderMarkdown converts a raw markdown string to HTML.
 // It also injects id attributes on headings for TOC anchor linking.
 func renderMarkdown(s string) template.HTML {
-	var buf bytes.Buffer
-	md := goldmark.New(
-		goldmark.WithRendererOptions(
-			html.WithUnsafe(),
-		),
-	)
-	if err := md.Convert([]byte(s), &buf); err != nil {
-		return template.HTML(template.HTMLEscapeString(s))
-	}
-	result := buf.String()
+	result := markdown.Render(s)
 
 	// Extract TOC entries and inject heading IDs
 	toc := ExtractTOC(s)
