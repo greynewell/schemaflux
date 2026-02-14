@@ -1,6 +1,7 @@
 package render
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -12,6 +13,8 @@ import (
 	"strings"
 
 	"github.com/greynewell/pssg/internal/entity"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/renderer/html"
 )
 
 // BuildFuncMap creates the template FuncMap with all helper functions.
@@ -93,6 +96,9 @@ func BuildFuncMap() template.FuncMap {
 		"le": func(a, b int) bool { return a <= b },
 		"gt": func(a, b int) bool { return a > b },
 		"ge": func(a, b int) bool { return a >= b },
+
+		// Markdown rendering
+		"markdown": renderMarkdown,
 
 		// Misc
 		"toJSON": toJSON,
@@ -616,4 +622,18 @@ func scaleQty(baseQty float64, baseServings, newServings int) string {
 	}
 	scaled := baseQty * float64(newServings) / float64(baseServings)
 	return fractionDisplay(scaled)
+}
+
+// renderMarkdown converts a raw markdown string to HTML using goldmark.
+func renderMarkdown(s string) template.HTML {
+	var buf bytes.Buffer
+	md := goldmark.New(
+		goldmark.WithRendererOptions(
+			html.WithUnsafe(),
+		),
+	)
+	if err := md.Convert([]byte(s), &buf); err != nil {
+		return template.HTML(template.HTMLEscapeString(s))
+	}
+	return template.HTML(buf.String())
 }

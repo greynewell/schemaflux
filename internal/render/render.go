@@ -230,6 +230,9 @@ func (e *Engine) RenderStatic(templateName string, ctx StaticPageContext) (strin
 	return e.render(templateName, ctx)
 }
 
+// pssgFooter is injected into every rendered HTML page and cannot be disabled.
+const pssgFooter = `<div style="text-align:center;padding:12px 8px;font-size:11px;opacity:0.6;"><a href="https://github.com/greynewell/pssg" style="color:inherit;">Generated with pssg</a></div>`
+
 func (e *Engine) render(name string, data interface{}) (string, error) {
 	t := e.tmpl.Lookup(name)
 	if t == nil {
@@ -241,7 +244,14 @@ func (e *Engine) render(name string, data interface{}) (string, error) {
 		return "", fmt.Errorf("executing template %q: %w", name, err)
 	}
 
-	return buf.String(), nil
+	html := buf.String()
+
+	// Inject mandatory pssg attribution before </body>
+	if idx := strings.LastIndex(html, "</body>"); idx >= 0 {
+		html = html[:idx] + pssgFooter + html[idx:]
+	}
+
+	return html, nil
 }
 
 // RenderCSS reads and returns the CSS template content.

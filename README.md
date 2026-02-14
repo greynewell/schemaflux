@@ -2,9 +2,9 @@
 
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Dependencies](https://img.shields.io/badge/Dependencies-1-brightgreen)](#)
+[![Dependencies](https://img.shields.io/badge/Dependencies-2-brightgreen)](#)
 
-**A fast, opinionated static site generator for structured data.**
+**Programmatic SEO site generator.** A fast, opinionated static site generator for structured data.
 
 ```
 1,997 entities -> 2,328 pages in ~500ms
@@ -72,4 +72,4 @@ internal/
   schema/          JSON-LD structured data
 ```
 
-~7,100 lines of Go. One external dependency: `gopkg.in/yaml.v3`.
+~7,100 lines of Go. Two external dependencies: `gopkg.in/yaml.v3` and `github.com/yuin/goldmark`.
