@@ -183,7 +183,7 @@ func totalTime(d1, d2 string) string {
 func formatDuration(d string) string {
 	minutes := durationMinutes(d)
 	if minutes == 0 {
-		return d
+		return ""
 	}
 	hours := minutes / 60
 	mins := minutes % 60
