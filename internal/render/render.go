@@ -20,6 +20,13 @@ type Engine struct {
 	cfg     *config.Config
 }
 
+// TOCEntry represents a heading in the table of contents.
+type TOCEntry struct {
+	Level int    // 2-6 (h2-h6)
+	Text  string // heading text
+	ID    string // slug of heading text, for anchor links
+}
+
 // EntityPageContext is the template context for entity (recipe) pages.
 type EntityPageContext struct {
 	Site            config.SiteConfig
@@ -29,6 +36,7 @@ type EntityPageContext struct {
 	CanonicalURL    string
 	Breadcrumbs     []Breadcrumb
 	Pairings        []*entity.Entity
+	Related         []*entity.Entity
 	Enrichment      map[string]interface{}
 	AffiliateLinks  []affiliate.Link
 	CookModePrompt  string
@@ -42,6 +50,9 @@ type EntityPageContext struct {
 	ValidSlugs      map[string]map[string]bool
 	Contributors    map[string]interface{}
 	CTA             config.CTAConfig
+	TOC             []TOCEntry
+	ReadingTime     int
+	WordCount       int
 }
 
 // HomepageContext is the template context for the homepage.
@@ -192,9 +203,14 @@ func NewEngine(cfg *config.Config) (*Engine, error) {
 	return &Engine{tmpl: tmpl, cfg: cfg}, nil
 }
 
-// RenderEntity renders an entity page.
+// RenderEntity renders an entity page. If the entity has a "template" field,
+// it overrides the default entity template from config.
 func (e *Engine) RenderEntity(ctx EntityPageContext) (string, error) {
-	return e.render(e.cfg.Templates.Entity, ctx)
+	templateName := e.cfg.Templates.Entity
+	if override := ctx.Entity.GetString("template"); override != "" {
+		templateName = override
+	}
+	return e.render(templateName, ctx)
 }
 
 // RenderHomepage renders the homepage.

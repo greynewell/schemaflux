@@ -2,25 +2,39 @@ package config
 
 // Config is the top-level pssg configuration loaded from YAML.
 type Config struct {
-	Site       SiteConfig       `yaml:"site"`
-	Paths      PathsConfig      `yaml:"paths"`
-	Data       DataConfig       `yaml:"data"`
-	Taxonomies []TaxonomyConfig `yaml:"taxonomies"`
-	Pagination PaginationConfig `yaml:"pagination"`
-	Schema     SchemaConfig     `yaml:"structured_data"`
-	Affiliates AffiliatesConfig `yaml:"affiliates"`
-	Enrichment EnrichmentConfig `yaml:"enrichment"`
-	Sitemap    SitemapConfig    `yaml:"sitemap"`
-	RSS        RSSConfig        `yaml:"rss"`
-	Robots     RobotsConfig     `yaml:"robots"`
-	LlmsTxt    LlmsTxtConfig   `yaml:"llms_txt"`
-	Templates  TemplatesConfig  `yaml:"templates"`
-	Output     OutputConfig     `yaml:"output"`
-	Extra      ExtraConfig      `yaml:"extra"`
-	Search     SearchConfig     `yaml:"search"`
+	Site            SiteConfig          `yaml:"site"`
+	Paths           PathsConfig         `yaml:"paths"`
+	Data            DataConfig          `yaml:"data"`
+	Taxonomies      []TaxonomyConfig    `yaml:"taxonomies"`
+	Pagination      PaginationConfig    `yaml:"pagination"`
+	Schema          SchemaConfig        `yaml:"structured_data"`
+	Affiliates      AffiliatesConfig    `yaml:"affiliates"`
+	Enrichment      EnrichmentConfig    `yaml:"enrichment"`
+	Sitemap         SitemapConfig       `yaml:"sitemap"`
+	RSS             RSSConfig           `yaml:"rss"`
+	Robots          RobotsConfig        `yaml:"robots"`
+	LlmsTxt         LlmsTxtConfig      `yaml:"llms_txt"`
+	Templates       TemplatesConfig     `yaml:"templates"`
+	Output          OutputConfig        `yaml:"output"`
+	Extra           ExtraConfig         `yaml:"extra"`
+	Search          SearchConfig        `yaml:"search"`
+	Sort            SortConfig          `yaml:"sort"`
+	RelatedEntities RelatedConfig       `yaml:"related_entities"`
 
 	// ConfigDir is the directory containing the config file (set at load time).
 	ConfigDir string `yaml:"-"`
+}
+
+// SortConfig controls how entities are ordered in listings.
+type SortConfig struct {
+	Field string `yaml:"field"` // entity frontmatter field to sort by
+	Order string `yaml:"order"` // "asc" or "desc" (default: "asc")
+}
+
+// RelatedConfig controls automatic related entity computation.
+type RelatedConfig struct {
+	Enabled bool `yaml:"enabled"` // opt-in, default false
+	Max     int  `yaml:"max"`     // max related entities (default 3)
 }
 
 type SiteConfig struct {

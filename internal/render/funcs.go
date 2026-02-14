@@ -100,6 +100,10 @@ func BuildFuncMap() template.FuncMap {
 		// Markdown rendering
 		"markdown": renderMarkdown,
 
+		// Reading time
+		"readingTime": readingTimeFunc,
+		"wordCount":   wordCountFunc,
+
 		// Misc
 		"toJSON": toJSON,
 		"noescape": func(s string) template.HTML { return template.HTML(s) },
@@ -624,7 +628,41 @@ func scaleQty(baseQty float64, baseServings, newServings int) string {
 	return fractionDisplay(scaled)
 }
 
+// WordCount returns the number of words in a string.
+func WordCount(s string) int {
+	return len(strings.Fields(s))
+}
+
+// ReadingTime returns estimated reading time in minutes at 200 WPM, minimum 1.
+func ReadingTime(body string) int {
+	words := WordCount(body)
+	minutes := int(math.Ceil(float64(words) / 200.0))
+	if minutes < 1 {
+		return 1
+	}
+	return minutes
+}
+
+// readingTimeFunc is the template function version of ReadingTime.
+func readingTimeFunc(v interface{}) int {
+	s, ok := v.(string)
+	if !ok {
+		return 1
+	}
+	return ReadingTime(s)
+}
+
+// wordCountFunc is the template function version of WordCount.
+func wordCountFunc(v interface{}) int {
+	s, ok := v.(string)
+	if !ok {
+		return 0
+	}
+	return WordCount(s)
+}
+
 // renderMarkdown converts a raw markdown string to HTML using goldmark.
+// It also injects id attributes on headings for TOC anchor linking.
 func renderMarkdown(s string) template.HTML {
 	var buf bytes.Buffer
 	md := goldmark.New(
@@ -635,5 +673,13 @@ func renderMarkdown(s string) template.HTML {
 	if err := md.Convert([]byte(s), &buf); err != nil {
 		return template.HTML(template.HTMLEscapeString(s))
 	}
-	return template.HTML(buf.String())
+	result := buf.String()
+
+	// Extract TOC entries and inject heading IDs
+	toc := ExtractTOC(s)
+	if len(toc) > 0 {
+		result = InjectHeadingIDs(result, toc)
+	}
+
+	return template.HTML(result)
 }

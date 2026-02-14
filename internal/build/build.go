@@ -75,6 +75,12 @@ func (b *Builder) Build() error {
 	// 5. Set up affiliate registry
 	affiliateRegistry := affiliate.NewRegistry(b.cfg.Affiliates)
 
+	// 5b. Sort entities (if configured)
+	if b.cfg.Sort.Field != "" {
+		log.Printf("Sorting entities by %s (%s)...", b.cfg.Sort.Field, b.cfg.Sort.Order)
+		SortEntities(entities, b.cfg.Sort)
+	}
+
 	// 6. Build taxonomies
 	log.Printf("Building taxonomies...")
 	taxonomies := taxonomy.BuildAll(entities, b.cfg.Taxonomies, enrichmentData)
@@ -148,6 +154,13 @@ func (b *Builder) Build() error {
 	// Track category taxonomy entries for RSS
 	categoryEntries := make(map[string][]*entity.Entity)
 
+	// 10a. Compute related entities (if configured)
+	var relatedMap map[string][]*entity.Entity
+	if b.cfg.RelatedEntities.Enabled {
+		log.Printf("Computing related entities...")
+		relatedMap = ComputeRelated(entities, taxonomies, b.cfg.RelatedEntities)
+	}
+
 	// 10b. Pre-enrich graph_data nodes (sequential — avoids concurrent map writes)
 	for _, e := range entities {
 		graphJSON := e.GetString("graph_data")
@@ -208,7 +221,7 @@ func (b *Builder) Build() error {
 			defer func() { <-sem }() // release
 
 			err := b.renderEntityPage(e, engine, schemaGen, slugMap, enrichmentData,
-				affiliateRegistry, taxonomies, validSlugs, contributors, outDir, addSitemapEntry)
+				affiliateRegistry, taxonomies, validSlugs, contributors, relatedMap, outDir, addSitemapEntry)
 			if err != nil {
 				atomic.AddInt64(&entityErrors, 1)
 				fmt.Fprintf(os.Stderr, "Warning: failed to render %s: %v\n", e.Slug, err)
@@ -359,6 +372,7 @@ func (b *Builder) renderEntityPage(
 	taxonomies []taxonomy.Taxonomy,
 	validSlugs map[string]map[string]bool,
 	contributors map[string]interface{},
+	relatedMap map[string][]*entity.Entity,
 	outDir string,
 	addSitemapEntry func(string, string, string),
 ) error {
@@ -492,6 +506,17 @@ func (b *Builder) renderEntityPage(
 		}
 	}
 
+	// TOC, reading time, word count
+	toc := render.ExtractTOC(e.Body)
+	readingTime := render.ReadingTime(e.Body)
+	wordCount := render.WordCount(e.Body)
+
+	// Related entities
+	var related []*entity.Entity
+	if relatedMap != nil {
+		related = relatedMap[e.Slug]
+	}
+
 	ctx := render.EntityPageContext{
 		Site:           b.cfg.Site,
 		Entity:         e,
@@ -500,6 +525,7 @@ func (b *Builder) renderEntityPage(
 		CanonicalURL:   entityURL,
 		Breadcrumbs:    breadcrumbs,
 		Pairings:       pairings,
+		Related:        related,
 		Enrichment:     eData,
 		AffiliateLinks: affLinks,
 		CookModePrompt: cookPrompt,
@@ -513,6 +539,9 @@ func (b *Builder) renderEntityPage(
 		ValidSlugs:     validSlugs,
 		Contributors:   contributors,
 		CTA:            b.cfg.Extra.CTA,
+		TOC:            toc,
+		ReadingTime:    readingTime,
+		WordCount:      wordCount,
 	}
 
 	html, err := engine.RenderEntity(ctx)
