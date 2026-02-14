@@ -20,6 +20,7 @@ func BuildFuncMap() template.FuncMap {
 	return template.FuncMap{
 		// String functions
 		"slug":      entity.ToSlug,
+		"slugify":   entity.ToSlug,
 		"lower":     strings.ToLower,
 		"upper":     strings.ToUpper,
 		"title":     strings.Title,
@@ -30,6 +31,7 @@ func BuildFuncMap() template.FuncMap {
 		"hasPrefix": strings.HasPrefix,
 		"hasSuffix": strings.HasSuffix,
 		"trimSpace": strings.TrimSpace,
+		"truncate":  truncateStr,
 		"urlencode": url.QueryEscape,
 
 		// Number functions
@@ -103,9 +105,22 @@ func BuildFuncMap() template.FuncMap {
 		"wordCount":   wordCountFunc,
 
 		// Misc
+		"itemName": itemName,
 		"toJSON": toJSON,
 		"noescape": func(s string) template.HTML { return template.HTML(s) },
 	}
+}
+
+// truncateStr truncates a string to max length, adding "..." if truncated.
+func truncateStr(s interface{}, maxLen int) string {
+	str := fmt.Sprintf("%v", s)
+	if len(str) <= maxLen {
+		return str
+	}
+	if maxLen <= 3 {
+		return str[:maxLen]
+	}
+	return str[:maxLen-3] + "..."
 }
 
 // formatNumber adds thousands separators to a number.
@@ -657,6 +672,21 @@ func wordCountFunc(v interface{}) int {
 		return 0
 	}
 	return WordCount(s)
+}
+
+// itemName extracts a display name from a value that may be a string or a map with a "name" key.
+func itemName(v interface{}) string {
+	switch val := v.(type) {
+	case string:
+		return val
+	case map[string]interface{}:
+		if name, ok := val["name"].(string); ok {
+			return name
+		}
+		return fmt.Sprintf("%v", val)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }
 
 // renderMarkdown converts a raw markdown string to HTML.

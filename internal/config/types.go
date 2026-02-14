@@ -172,11 +172,13 @@ type OutputConfig struct {
 }
 
 type CTAConfig struct {
-	Enabled     bool   `yaml:"enabled"`
-	Heading     string `yaml:"heading"`
-	Description string `yaml:"description"`
-	ButtonText  string `yaml:"button_text"`
-	ButtonURL   string `yaml:"button_url"`
+	Enabled       bool   `yaml:"enabled"`
+	Heading       string `yaml:"heading"`
+	Description   string `yaml:"description"`
+	ButtonText    string `yaml:"button_text"`
+	ButtonURL     string `yaml:"button_url"`
+	SecondaryText string `yaml:"secondary_text"`
+	SecondaryURL  string `yaml:"secondary_url"`
 }
 
 type ExtraConfig struct {

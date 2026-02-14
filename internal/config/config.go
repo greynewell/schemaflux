@@ -153,6 +153,9 @@ func resolvePaths(cfg *Config) {
 	}
 	if cfg.Enrichment.CacheDir != "" {
 		cfg.Enrichment.CacheDir = resolve(cfg.Enrichment.CacheDir)
+	} else if cfg.Paths.Cache != "" {
+		// Fallback: use paths.cache as enrichment cache dir
+		cfg.Enrichment.CacheDir = cfg.Paths.Cache
 	}
 	if cfg.Extra.Favorites != "" {
 		cfg.Extra.Favorites = resolve(cfg.Extra.Favorites)

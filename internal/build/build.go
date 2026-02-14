@@ -273,10 +273,31 @@ func (b *Builder) Build() error {
 	addSitemapEntry("/index.html", b.cfg.Sitemap.Priorities["homepage"], b.cfg.Sitemap.ChangeFreqs["homepage"])
 
 	// 14. Render static pages
+	log.Printf("Rendering %d static page(s)...", len(b.cfg.Templates.StaticPages))
 	for path, tmpl := range b.cfg.Templates.StaticPages {
+		staticPageURL := fmt.Sprintf("%s/%s", b.cfg.Site.BaseURL, path)
+		staticOG := makeOG(b.cfg.Site.Name, b.cfg.Site.Name, b.cfg.Site.Description, staticPageURL, "", "website")
+		// Generate a simple WebPage JSON-LD for static pages
+		staticWebPage := map[string]interface{}{
+			"@context": "https://schema.org",
+			"@type":    "WebPage",
+			"name":     b.cfg.Site.Name,
+			"url":      staticPageURL,
+			"isPartOf": map[string]interface{}{
+				"@type": "WebSite",
+				"name":  b.cfg.Site.Name,
+				"url":   b.cfg.Site.BaseURL,
+			},
+		}
+		staticJsonLD := schema.MarshalSchemas(staticWebPage)
 		ctx := render.StaticPageContext{
 			Site:          b.cfg.Site,
+			JsonLD:        toTemplateHTML(staticJsonLD),
+			OG:            staticOG,
 			AllTaxonomies: taxonomies,
+			Taxonomies:    taxonomies,
+			Favorites:     favorites,
+			CTA:           b.cfg.Extra.CTA,
 		}
 		html, err := engine.RenderStatic(tmpl, ctx)
 		if err != nil {
@@ -400,8 +421,33 @@ func (b *Builder) renderEntityPage(
 	// Cook mode prompt
 	cookPrompt := render.GenerateCookModePrompt(e, eData, affLinks)
 
-	// JSON-LD
-	entitySchema := schemaGen.GenerateEntitySchema(e, entityURL)
+	// Share image (generate before JSON-LD so we can use it as fallback image)
+	entityShareSVG := render.GenerateEntityShareSVG(
+		b.cfg.Site.Name,
+		e.GetString("title"),
+		e.GetString("node_type"),
+		e.GetString("language"),
+		e.GetString("domain"),
+	)
+	entityImageURL := writeShareSVG(outDir, b.cfg.Site.BaseURL, e.Slug+".svg", entityShareSVG)
+
+	// JSON-LD - use Recipe schema when entity type is Recipe
+	var entitySchema map[string]interface{}
+	if b.cfg.Schema.EntityType == "Recipe" {
+		entitySchema = schemaGen.GenerateRecipeSchema(e, entityURL)
+		// Ensure image field is set (required for Google rich results)
+		if _, hasImage := entitySchema["image"]; !hasImage && entityImageURL != "" {
+			entitySchema["image"] = []string{entityImageURL}
+		}
+		// Add HowToStep url fields
+		if steps, ok := entitySchema["recipeInstructions"].([]map[string]interface{}); ok {
+			for i := range steps {
+				steps[i]["url"] = fmt.Sprintf("%s#step-%d", entityURL, i+1)
+			}
+		}
+	} else {
+		entitySchema = schemaGen.GenerateEntitySchema(e, entityURL)
+	}
 
 	// Breadcrumbs
 	var breadcrumbs []render.Breadcrumb
@@ -424,16 +470,6 @@ func (b *Builder) renderEntityPage(
 	}
 
 	jsonLD := schema.MarshalSchemas(entitySchema, breadcrumbSchema, faqSchema)
-
-	// Share image + OG
-	entityShareSVG := render.GenerateEntityShareSVG(
-		b.cfg.Site.Name,
-		e.GetString("title"),
-		e.GetString("node_type"),
-		e.GetString("language"),
-		e.GetString("domain"),
-	)
-	entityImageURL := writeShareSVG(outDir, b.cfg.Site.BaseURL, e.Slug+".svg", entityShareSVG)
 
 	og := makeOG(b.cfg.Site.Name, e.GetString("title")+" | "+b.cfg.Site.Name,
 		e.GetString("description"), entityURL, entityImageURL, "article")
@@ -668,8 +704,12 @@ func (b *Builder) renderTaxonomyPages(
 					URL:  fmt.Sprintf("%s/%s.html", b.cfg.Site.BaseURL, e.Slug),
 				})
 			}
+			entityLabel2 := b.cfg.Data.EntityType + "s"
+			if entityLabel2 == "s" {
+				entityLabel2 = "entries"
+			}
 			collectionSchema := schemaGen.GenerateCollectionPageSchema(
-				entry.Name, fmt.Sprintf("%s %s entities", entry.Name, tax.LabelSingular),
+				entry.Name, fmt.Sprintf("%s %s %s", entry.Name, tax.LabelSingular, entityLabel2),
 				pageURL, items, hubImageURL,
 			)
 
@@ -690,9 +730,13 @@ func (b *Builder) renderTaxonomyPages(
 				}
 			}
 
+			entityLabel := b.cfg.Data.EntityType + "s"
+			if entityLabel == "s" {
+				entityLabel = "entries"
+			}
 			og := makeOG(b.cfg.Site.Name,
 				fmt.Sprintf("%s — %s | %s", entry.Name, tax.Label, b.cfg.Site.Name),
-				fmt.Sprintf("Browse all %d %s entities in %s", len(entry.Entities), entry.Name, b.cfg.Site.Name),
+				fmt.Sprintf("Browse all %d %s %s on %s", len(entry.Entities), entry.Name, entityLabel, b.cfg.Site.Name),
 				pageURL, hubImageURL, "article")
 
 			ctx := render.HubPageContext{
@@ -789,7 +833,7 @@ func (b *Builder) renderTaxonomyPages(
 	taxIdxPageURL := fmt.Sprintf("%s/%s/", b.cfg.Site.BaseURL, tax.Name)
 	taxIdxOG := makeOG(b.cfg.Site.Name,
 		fmt.Sprintf("%s | %s", tax.Label, b.cfg.Site.Name),
-		fmt.Sprintf("Browse architecture documentation by %s. %d categories available.", strings.ToLower(tax.Label), len(tax.Entries)),
+		fmt.Sprintf("Browse %s by %s. %d categories available on %s.", b.cfg.Data.EntityType+"s", strings.ToLower(tax.Label), len(tax.Entries), b.cfg.Site.Name),
 		taxIdxPageURL, taxIdxImageURL, "article")
 
 	ctx := render.TaxonomyIndexContext{
@@ -1016,8 +1060,17 @@ func (b *Builder) renderHomepage(
 	// JSON-LD
 	websiteSchema := schemaGen.GenerateWebSiteSchema(imageURL)
 
+	// ItemList: include favorites if available, otherwise top 10 entities
+	var itemListSource []*entity.Entity
+	if len(favorites) > 0 {
+		itemListSource = favorites
+	} else if len(entities) > 10 {
+		itemListSource = entities[:10]
+	} else {
+		itemListSource = entities
+	}
 	var items []schema.ItemListEntry
-	for _, e := range entities {
+	for _, e := range itemListSource {
 		items = append(items, schema.ItemListEntry{
 			Name: e.GetString("title"),
 			URL:  fmt.Sprintf("%s/%s.html", b.cfg.Site.BaseURL, e.Slug),
@@ -1039,7 +1092,7 @@ func (b *Builder) renderHomepage(
 		Taxonomies:   taxonomies,
 		Favorites:    favorites,
 		JsonLD:       toTemplateHTML(jsonLD),
-		OG:           makeOG(b.cfg.Site.Name, b.cfg.Site.Name+" — Architecture Documentation", b.cfg.Site.Description, pageURL, imageURL, "website"),
+		OG:           makeOG(b.cfg.Site.Name, b.cfg.Site.Name, b.cfg.Site.Description, pageURL, imageURL, "website"),
 		ChartData:    template.JS(chartJSON),
 		ArchData:     template.JS(archJSON),
 		EntityCount:  len(entities),
@@ -1107,20 +1160,24 @@ func (b *Builder) renderAllEntitiesPages(
 				URL:  fmt.Sprintf("%s/%s.html", b.cfg.Site.BaseURL, e.Slug),
 			})
 		}
+		allLabel := "All " + strings.Title(b.cfg.Data.EntityType) + "s"
+		if b.cfg.Data.EntityType == "" {
+			allLabel = "All Entities"
+		}
 		collectionSchema := schemaGen.GenerateCollectionPageSchema(
-			"All Entities", "Browse all entities in the architecture documentation",
+			allLabel, fmt.Sprintf("Browse all %s on %s", b.cfg.Data.EntityType+"s", b.cfg.Site.Name),
 			pageURL, items, allImageURL,
 		)
 		breadcrumbs := []render.Breadcrumb{
 			{Name: "Home", URL: b.cfg.Site.BaseURL + "/"},
-			{Name: "All Entities", URL: ""},
+			{Name: allLabel, URL: ""},
 		}
 		breadcrumbSchema := schemaGen.GenerateBreadcrumbSchema(toBreadcrumbItems(breadcrumbs))
 		jsonLD := schema.MarshalSchemas(collectionSchema, breadcrumbSchema)
 
 		allOG := makeOG(b.cfg.Site.Name,
-			fmt.Sprintf("All Entities | %s", b.cfg.Site.Name),
-			fmt.Sprintf("Browse all %d entities in the architecture documentation", len(entities)),
+			fmt.Sprintf("%s | %s", allLabel, b.cfg.Site.Name),
+			fmt.Sprintf("Browse all %d %s on %s", len(entities), b.cfg.Data.EntityType+"s", b.cfg.Site.Name),
 			pageURL, allImageURL, "article")
 
 		ctx := render.AllEntitiesPageContext{

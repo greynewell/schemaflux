@@ -140,8 +140,12 @@ type StaticPageContext struct {
 	Title         string
 	Content       template.HTML
 	JsonLD        template.HTML
+	OG            OGMeta
 	Breadcrumbs   []Breadcrumb
 	AllTaxonomies []taxonomy.Taxonomy
+	Taxonomies    []taxonomy.Taxonomy
+	Favorites     []*entity.Entity
+	CTA           config.CTAConfig
 }
 
 // OGMeta holds Open Graph metadata for social sharing.
