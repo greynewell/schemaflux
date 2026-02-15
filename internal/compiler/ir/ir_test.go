@@ -126,6 +126,50 @@ func TestDiagnostics(t *testing.T) {
 	}
 }
 
+func TestSourcePosString(t *testing.T) {
+	tests := []struct {
+		pos  SourcePos
+		want string
+	}{
+		{SourcePos{}, "<unknown>"},
+		{SourcePos{File: "test.md"}, "test.md"},
+		{SourcePos{File: "test.md", Line: 5}, "test.md:5"},
+		{SourcePos{Line: 10}, "<unknown>:10"},
+	}
+	for _, tt := range tests {
+		got := tt.pos.String()
+		if got != tt.want {
+			t.Errorf("SourcePos%+v.String() = %q, want %q", tt.pos, got, tt.want)
+		}
+	}
+}
+
+func TestAddDiagnosticAt(t *testing.T) {
+	cfg := testConfig()
+	p := NewProgram(cfg)
+
+	pos := SourcePos{File: "content/test.md", Line: 7}
+	p.AddDiagnosticAt(DiagError, "field type mismatch", "test-slug", pos)
+
+	if len(p.Diagnostics) != 1 {
+		t.Fatalf("expected 1 diagnostic, got %d", len(p.Diagnostics))
+	}
+
+	d := p.Diagnostics[0]
+	if d.Level != DiagError {
+		t.Errorf("level = %v, want DiagError", d.Level)
+	}
+	if d.Message != "field type mismatch" {
+		t.Errorf("message = %q", d.Message)
+	}
+	if d.Entity != "test-slug" {
+		t.Errorf("entity = %q", d.Entity)
+	}
+	if d.Pos.File != "content/test.md" || d.Pos.Line != 7 {
+		t.Errorf("pos = %+v, want {content/test.md 7}", d.Pos)
+	}
+}
+
 func TestDiagLevelString(t *testing.T) {
 	if DiagWarning.String() != "warning" {
 		t.Errorf("DiagWarning.String() = %q", DiagWarning.String())

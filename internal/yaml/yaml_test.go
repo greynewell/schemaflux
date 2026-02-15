@@ -972,6 +972,102 @@ func TestOnlyComments(t *testing.T) {
 	}
 }
 
+// ---------- Source position tests ----------
+
+func TestPrepareLineNumbers(t *testing.T) {
+	input := `
+# comment on line 2
+title: hello
+
+# blank line above, comment here
+age: 30
+tags:
+  - go
+  - yaml
+`
+	lines := prepareLines(input)
+	// "title: hello" is on raw line index 2 → lineNum 3
+	// "age: 30" is on raw line index 5 → lineNum 6
+	// "tags:" is on raw line index 6 → lineNum 7
+	// "- go" is on raw line index 7 → lineNum 8
+	// "- yaml" is on raw line index 8 → lineNum 9
+
+	expected := map[string]int{
+		"title: hello": 3,
+		"age: 30":      6,
+		"tags:":        7,
+	}
+	for _, l := range lines {
+		if want, ok := expected[l.content]; ok {
+			if l.lineNum != want {
+				t.Errorf("line %q: lineNum = %d, want %d", l.content, l.lineNum, want)
+			}
+		}
+	}
+}
+
+func TestUnmarshalMapWithPositions(t *testing.T) {
+	input := `title: Hello World
+# comment
+description: A test entity
+servings: 4
+tags:
+  - go
+  - yaml
+`
+	m, pos, err := UnmarshalMapWithPositions([]byte(input))
+	if err != nil {
+		t.Fatalf("UnmarshalMapWithPositions error: %v", err)
+	}
+
+	// Check values are correct (same as UnmarshalMap)
+	if m["title"] != "Hello World" {
+		t.Errorf("title = %v", m["title"])
+	}
+	if m["servings"] != 4 {
+		t.Errorf("servings = %v", m["servings"])
+	}
+
+	// Check positions
+	if pos["title"].Line != 1 {
+		t.Errorf("title line = %d, want 1", pos["title"].Line)
+	}
+	if pos["description"].Line != 3 {
+		t.Errorf("description line = %d, want 3", pos["description"].Line)
+	}
+	if pos["servings"].Line != 4 {
+		t.Errorf("servings line = %d, want 4", pos["servings"].Line)
+	}
+	if pos["tags"].Line != 5 {
+		t.Errorf("tags line = %d, want 5", pos["tags"].Line)
+	}
+}
+
+func TestUnmarshalMapWithPositionsBlankLines(t *testing.T) {
+	input := `
+
+title: First
+
+# a comment
+
+name: Second
+
+`
+	m, pos, err := UnmarshalMapWithPositions([]byte(input))
+	if err != nil {
+		t.Fatalf("error: %v", err)
+	}
+	if m["title"] != "First" {
+		t.Errorf("title = %v", m["title"])
+	}
+	if pos["title"].Line != 3 {
+		t.Errorf("title line = %d, want 3", pos["title"].Line)
+	}
+	if pos["name"].Line != 7 {
+		t.Errorf("name line = %d, want 7", pos["name"].Line)
+	}
+}
+
 func TestMixedIndentLevels(t *testing.T) {
 	input := `
 a:

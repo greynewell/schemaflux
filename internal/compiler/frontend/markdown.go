@@ -55,21 +55,44 @@ func (l *markdownLoader) parseFile(path string) (*entity.Entity, error) {
 		return nil, fmt.Errorf("splitting frontmatter: %w", err)
 	}
 
-	fields, err := yaml.UnmarshalMap([]byte(frontmatter))
+	fields, positions, err := yaml.UnmarshalMapWithPositions([]byte(frontmatter))
 	if err != nil {
 		return nil, fmt.Errorf("parsing frontmatter YAML: %w", err)
+	}
+
+	// Compute frontmatter offset: the opening "---" line number.
+	// Frontmatter fields are relative to the start of the frontmatter block;
+	// add the offset to get absolute file line numbers.
+	fmOffset := frontmatterOffset(content)
+	fieldPositions := make(map[string]int, len(positions))
+	for k, fp := range positions {
+		fieldPositions[k] = fmOffset + fp.Line
 	}
 
 	slug := l.deriveSlug(path, fields)
 	sections := l.parseSections(body)
 
 	return &entity.Entity{
-		Slug:       slug,
-		SourceFile: path,
-		Fields:     fields,
-		Sections:   sections,
-		Body:       body,
+		Slug:           slug,
+		SourceFile:     path,
+		Fields:         fields,
+		FieldPositions: fieldPositions,
+		Sections:       sections,
+		Body:           body,
 	}, nil
+}
+
+// frontmatterOffset returns the 1-based line number of the opening "---".
+// Fields inside frontmatter are relative to the line after "---", so adding
+// this offset converts them to absolute file line numbers.
+func frontmatterOffset(content string) int {
+	lines := strings.Split(content, "\n")
+	for i, line := range lines {
+		if strings.TrimSpace(line) == "---" {
+			return i + 1 // 1-based
+		}
+	}
+	return 0
 }
 
 func splitFrontmatter(content string) (string, string, error) {

@@ -2,11 +2,12 @@ package entity
 
 // Entity is a generic content item with map-based fields and parsed body sections.
 type Entity struct {
-	Slug       string
-	SourceFile string
-	Fields     map[string]interface{}
-	Sections   map[string]interface{} // section name -> content ([]string for lists, []FAQ for faqs, string for markdown)
-	Body       string                 // raw markdown body (minus frontmatter)
+	Slug           string
+	SourceFile     string
+	Fields         map[string]interface{}
+	FieldPositions map[string]int         // field name -> absolute 1-based line number (nil if not tracked)
+	Sections       map[string]interface{} // section name -> content ([]string for lists, []FAQ for faqs, string for markdown)
+	Body           string                 // raw markdown body (minus frontmatter)
 }
 
 // FAQ represents a question-answer pair extracted from a body section.

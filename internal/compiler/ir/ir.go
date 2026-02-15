@@ -1,6 +1,7 @@
 package ir
 
 import (
+	"fmt"
 	"html/template"
 
 	"github.com/greynewell/schemaflux/internal/affiliate"
@@ -77,11 +78,32 @@ type TaxonomyGroup struct {
 	IndexURL     string
 }
 
+// SourcePos identifies a location in a source file.
+type SourcePos struct {
+	File string
+	Line int // 0 = unknown
+}
+
+// String formats the position as "file:line", "file", or "<unknown>".
+func (s SourcePos) String() string {
+	if s.File == "" && s.Line == 0 {
+		return "<unknown>"
+	}
+	if s.Line == 0 {
+		return s.File
+	}
+	if s.File == "" {
+		return fmt.Sprintf("<unknown>:%d", s.Line)
+	}
+	return fmt.Sprintf("%s:%d", s.File, s.Line)
+}
+
 // Diagnostic records a validation warning or error.
 type Diagnostic struct {
 	Level   DiagLevel
 	Message string
-	Entity  string // slug, if entity-specific
+	Entity  string    // slug, if entity-specific
+	Pos     SourcePos // source location (zero value = unknown)
 }
 
 // DiagLevel indicates the severity of a diagnostic.
@@ -157,6 +179,16 @@ func (p *Program) AddDiagnostic(level DiagLevel, message, entitySlug string) {
 		Level:   level,
 		Message: message,
 		Entity:  entitySlug,
+	})
+}
+
+// AddDiagnosticAt appends a diagnostic with a source position.
+func (p *Program) AddDiagnosticAt(level DiagLevel, message, entitySlug string, pos SourcePos) {
+	p.Diagnostics = append(p.Diagnostics, Diagnostic{
+		Level:   level,
+		Message: message,
+		Entity:  entitySlug,
+		Pos:     pos,
 	})
 }
 

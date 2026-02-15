@@ -23,6 +23,9 @@ type Config struct {
 
 	// ConfigDir is the directory containing the config file (set at load time).
 	ConfigDir string `yaml:"-"`
+
+	// FieldIndex is built after loading; provides fast lookup of field schemas.
+	FieldIndex *FieldSchemaIndex `yaml:"-"`
 }
 
 // SortConfig controls how entities are ordered in listings.
@@ -60,10 +63,20 @@ type PathsConfig struct {
 }
 
 type DataConfig struct {
-	Format      string       `yaml:"format"`
-	EntityType  string       `yaml:"entity_type"`
-	EntitySlug  EntitySlug   `yaml:"entity_slug"`
+	Format       string        `yaml:"format"`
+	EntityType   string        `yaml:"entity_type"`
+	EntitySlug   EntitySlug    `yaml:"entity_slug"`
 	BodySections []BodySection `yaml:"body_sections"`
+	Fields       []FieldSchema `yaml:"fields"`
+}
+
+// FieldSchema declares the name, type, and constraints for a frontmatter field.
+type FieldSchema struct {
+	Name     string   `yaml:"name"`
+	Type     string   `yaml:"type"`     // string, int, float, bool, date, list, enum
+	Required bool     `yaml:"required"`
+	Default  string   `yaml:"default"`
+	Allowed  []string `yaml:"allowed"` // enum constraint
 }
 
 type EntitySlug struct {

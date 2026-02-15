@@ -8,6 +8,51 @@ import (
 	"github.com/greynewell/schemaflux/internal/yaml"
 )
 
+// validFieldTypes lists the type strings accepted in FieldSchema.Type.
+var validFieldTypes = map[string]bool{
+	"string": true,
+	"int":    true,
+	"float":  true,
+	"bool":   true,
+	"date":   true,
+	"list":   true,
+	"enum":   true,
+}
+
+// FieldSchemaIndex provides fast lookup of declared field schemas.
+type FieldSchemaIndex struct {
+	byName map[string]FieldSchema
+	all    []FieldSchema
+}
+
+// Get returns the schema for a named field and whether it exists.
+func (idx *FieldSchemaIndex) Get(name string) (FieldSchema, bool) {
+	fs, ok := idx.byName[name]
+	return fs, ok
+}
+
+// All returns all declared field schemas.
+func (idx *FieldSchemaIndex) All() []FieldSchema {
+	return idx.all
+}
+
+// HasSchema returns true if at least one field schema is declared.
+func (idx *FieldSchemaIndex) HasSchema() bool {
+	return len(idx.all) > 0
+}
+
+// BuildFieldIndex constructs the FieldSchemaIndex from Data.Fields.
+func BuildFieldIndex(fields []FieldSchema) *FieldSchemaIndex {
+	idx := &FieldSchemaIndex{
+		byName: make(map[string]FieldSchema, len(fields)),
+		all:    fields,
+	}
+	for _, f := range fields {
+		idx.byName[f.Name] = f
+	}
+	return idx
+}
+
 // Load reads and parses a YAML config file, applies defaults, and validates.
 func Load(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
@@ -26,6 +71,9 @@ func Load(path string) (*Config, error) {
 	if err := validate(&cfg); err != nil {
 		return nil, fmt.Errorf("validating config: %w", err)
 	}
+
+	// Build field schema index
+	cfg.FieldIndex = BuildFieldIndex(cfg.Data.Fields)
 
 	// Resolve relative paths against config directory
 	resolvePaths(&cfg)
@@ -129,6 +177,11 @@ func validate(cfg *Config) error {
 	}
 	if cfg.Paths.Data == "" {
 		return fmt.Errorf("paths.data is required")
+	}
+	for _, f := range cfg.Data.Fields {
+		if f.Type != "" && !validFieldTypes[f.Type] {
+			return fmt.Errorf("data.fields: field %q has unknown type %q", f.Name, f.Type)
+		}
 	}
 	return nil
 }

@@ -5,12 +5,13 @@ import (
 )
 
 // Validate enforces IR contracts:
-// - Required fields (title) on every entity
+// - Required fields (title) on every entity — skipped when field schema is active
 // - Slug uniqueness
 // - Pairing reference integrity (no dangling refs)
 // - URL presence after URLResolutionPass
 func Validate(p *Program) {
 	seen := make(map[string]bool)
+	hasFieldSchema := p.Config.FieldIndex != nil && p.Config.FieldIndex.HasSchema()
 
 	for _, re := range p.Entities {
 		slug := re.Slug
@@ -21,8 +22,8 @@ func Validate(p *Program) {
 		}
 		seen[slug] = true
 
-		// Required field: title
-		if re.Raw.GetString("title") == "" {
+		// Required field: title (skip if field schema handles it)
+		if !hasFieldSchema && re.Raw.GetString("title") == "" {
 			p.AddDiagnostic(DiagWarning, "missing required field: title", slug)
 		}
 

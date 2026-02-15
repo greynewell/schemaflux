@@ -20,6 +20,20 @@ func Compile(cfg *config.Config) error {
 	// Frontend: parse .md files into IR
 	p, err := frontend.Parse(cfg)
 	if err != nil {
+		// Log diagnostics before aborting (schema validation errors)
+		if p != nil {
+			for _, d := range p.Diagnostics {
+				prefix := ""
+				if d.Pos.File != "" || d.Pos.Line != 0 {
+					prefix = d.Pos.String() + ": "
+				}
+				if d.Entity != "" {
+					log.Printf("  [%s] %s%s: %s", d.Level, prefix, d.Entity, d.Message)
+				} else {
+					log.Printf("  [%s] %s%s", d.Level, prefix, d.Message)
+				}
+			}
+		}
 		return fmt.Errorf("frontend: %w", err)
 	}
 
@@ -47,10 +61,14 @@ func Compile(cfg *config.Config) error {
 
 	// Log diagnostics
 	for _, d := range p.Diagnostics {
+		prefix := ""
+		if d.Pos.File != "" || d.Pos.Line != 0 {
+			prefix = d.Pos.String() + ": "
+		}
 		if d.Entity != "" {
-			log.Printf("  [%s] %s: %s", d.Level, d.Entity, d.Message)
+			log.Printf("  [%s] %s%s: %s", d.Level, prefix, d.Entity, d.Message)
 		} else {
-			log.Printf("  [%s] %s", d.Level, d.Message)
+			log.Printf("  [%s] %s%s", d.Level, prefix, d.Message)
 		}
 	}
 

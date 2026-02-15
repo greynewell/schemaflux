@@ -26,6 +26,23 @@ func Parse(cfg *config.Config) (*ir.Program, error) {
 		p.Entities = append(p.Entities, ir.NewResolvedEntity(e))
 	}
 
+	// Schema validation (if configured)
+	if cfg.FieldIndex != nil && cfg.FieldIndex.HasSchema() {
+		errorCount := 0
+		for _, e := range entities {
+			diags := validateEntitySchema(e, cfg.FieldIndex)
+			for _, d := range diags {
+				p.Diagnostics = append(p.Diagnostics, d)
+				if d.Level == ir.DiagError {
+					errorCount++
+				}
+			}
+		}
+		if p.HasErrors() {
+			return p, fmt.Errorf("schema validation failed: %d error(s)", errorCount)
+		}
+	}
+
 	// Load contributors
 	loadContributors(p)
 

@@ -39,6 +39,30 @@ func UnmarshalMap(data []byte) (map[string]interface{}, error) {
 	return m, nil
 }
 
+// FieldPos records the source position of a field.
+type FieldPos struct {
+	Line int // 1-based line number
+}
+
+// UnmarshalMapWithPositions parses YAML data into a generic map[string]interface{}
+// (identical to UnmarshalMap) plus a map[string]FieldPos mapping each top-level
+// key to its source line number.
+func UnmarshalMapWithPositions(data []byte) (map[string]interface{}, map[string]FieldPos, error) {
+	node, err := parse(string(data))
+	if err != nil {
+		return nil, nil, err
+	}
+	m, ok := nodeToInterface(node).(map[string]interface{})
+	if !ok {
+		return nil, nil, fmt.Errorf("yaml: top-level value is not a mapping")
+	}
+	positions := make(map[string]FieldPos, len(node.mapping))
+	for _, e := range node.mapping {
+		positions[e.key] = FieldPos{Line: e.lineNum}
+	}
+	return m, positions, nil
+}
+
 // ---------- internal AST ----------
 
 // nodeKind distinguishes the three shapes a YAML value can take.
@@ -60,8 +84,9 @@ type node struct {
 }
 
 type mappingEntry struct {
-	key   string
-	value *node
+	key     string
+	value   *node
+	lineNum int // 1-based original source line (0 = unknown)
 }
 
 // ---------- parser ----------
@@ -70,6 +95,7 @@ type mappingEntry struct {
 type line struct {
 	indent  int
 	content string // leading whitespace stripped
+	lineNum int    // 1-based original source line number
 }
 
 // parse turns the raw YAML text into an AST node tree.
@@ -80,11 +106,11 @@ func parse(text string) (*node, error) {
 }
 
 // prepareLines splits, strips comments, drops blank/comment-only lines, and
-// records indentation.
+// records indentation. Each kept line remembers its 1-based original line number.
 func prepareLines(text string) []line {
 	raw := strings.Split(text, "\n")
 	out := make([]line, 0, len(raw))
-	for _, r := range raw {
+	for i, r := range raw {
 		if len(strings.TrimSpace(r)) == 0 {
 			continue
 		}
@@ -93,7 +119,7 @@ func prepareLines(text string) []line {
 		if content == "" || content[0] == '#' {
 			continue
 		}
-		out = append(out, line{indent: indent, content: content})
+		out = append(out, line{indent: indent, content: content, lineNum: i + 1})
 	}
 	return out
 }
@@ -168,10 +194,11 @@ func parseMapping(lines []line, pos, indent int) (*node, int, error) {
 			continue
 		}
 
+		entryLine := l.lineNum
 		if val != "" {
 			// Inline scalar value.
 			s, q := unquote(val)
-			n.mapping = append(n.mapping, mappingEntry{key: key, value: &node{kind: kindScalar, scalar: s, quoted: q}})
+			n.mapping = append(n.mapping, mappingEntry{key: key, value: &node{kind: kindScalar, scalar: s, quoted: q}, lineNum: entryLine})
 			pos++
 		} else {
 			// Value is on subsequent indented lines — could be mapping, sequence, or empty.
@@ -183,19 +210,19 @@ func parseMapping(lines []line, pos, indent int) (*node, int, error) {
 					if err != nil {
 						return nil, next, err
 					}
-					n.mapping = append(n.mapping, mappingEntry{key: key, value: child})
+					n.mapping = append(n.mapping, mappingEntry{key: key, value: child, lineNum: entryLine})
 					pos = next
 				} else {
 					child, next, err := parseMapping(lines, pos, childIndent)
 					if err != nil {
 						return nil, next, err
 					}
-					n.mapping = append(n.mapping, mappingEntry{key: key, value: child})
+					n.mapping = append(n.mapping, mappingEntry{key: key, value: child, lineNum: entryLine})
 					pos = next
 				}
 			} else {
 				// Empty value.
-				n.mapping = append(n.mapping, mappingEntry{key: key, value: &node{kind: kindScalar, scalar: ""}})
+				n.mapping = append(n.mapping, mappingEntry{key: key, value: &node{kind: kindScalar, scalar: ""}, lineNum: entryLine})
 			}
 		}
 	}
@@ -229,21 +256,55 @@ func parseSequence(lines []line, pos, indent int) (*node, int, error) {
 			// to this item, plus the first key-value we already have.
 			mapNode := &node{kind: kindMapping}
 			mapNode.mapping = append(mapNode.mapping, mappingEntry{
-				key:   key,
-				value: scalarOrEmpty(val),
+				key:     key,
+				value:   scalarOrEmpty(val),
+				lineNum: l.lineNum,
 			})
 			pos++
 			// Subsequent lines at indent+2 (or more) belong to this map item.
 			itemIndent := indent + 2
-			for pos < len(lines) && lines[pos].indent >= itemIndent && !strings.HasPrefix(lines[pos].content, "- ") {
+			for pos < len(lines) && lines[pos].indent >= itemIndent {
+				// A "- " at this indent means the next sequence item, so stop.
+				if lines[pos].indent == itemIndent && (strings.HasPrefix(lines[pos].content, "- ") || lines[pos].content == "-") {
+					break
+				}
 				kk, vv, ok2 := splitKeyValue(lines[pos].content)
 				if ok2 {
-					mapNode.mapping = append(mapNode.mapping, mappingEntry{
-						key:   kk,
-						value: scalarOrEmpty(vv),
-					})
+					if vv != "" {
+						mapNode.mapping = append(mapNode.mapping, mappingEntry{
+							key:     kk,
+							value:   scalarOrEmpty(vv),
+							lineNum: lines[pos].lineNum,
+						})
+						pos++
+					} else {
+						// Empty value — check for nested structure.
+						entryLn := lines[pos].lineNum
+						pos++
+						if pos < len(lines) && lines[pos].indent > itemIndent {
+							childIndent := lines[pos].indent
+							if strings.HasPrefix(lines[pos].content, "- ") || lines[pos].content == "-" {
+								child, next, err := parseSequence(lines, pos, childIndent)
+								if err != nil {
+									return nil, next, err
+								}
+								mapNode.mapping = append(mapNode.mapping, mappingEntry{key: kk, value: child, lineNum: entryLn})
+								pos = next
+							} else {
+								child, next, err := parseMapping(lines, pos, childIndent)
+								if err != nil {
+									return nil, next, err
+								}
+								mapNode.mapping = append(mapNode.mapping, mappingEntry{key: kk, value: child, lineNum: entryLn})
+								pos = next
+							}
+						} else {
+							mapNode.mapping = append(mapNode.mapping, mappingEntry{key: kk, value: &node{kind: kindScalar, scalar: ""}, lineNum: entryLn})
+						}
+					}
+				} else {
+					pos++
 				}
-				pos++
 			}
 			n.sequence = append(n.sequence, mapNode)
 		} else {
