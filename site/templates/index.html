@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="{{.Site.Language}}">
+<head>
+{{template "_head.html"}}
+<title>{{.Site.Name}} — {{.Site.Description}}</title>
+<meta name="description" content="{{.Site.Description}}">
+<meta property="og:title" content="{{.Site.Name}}">
+<meta property="og:description" content="{{.Site.Description}}">
+<meta property="og:url" content="{{.Site.BaseURL}}/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{.Site.Name}}">
+<link rel="canonical" href="{{.Site.BaseURL}}/">
+{{.JsonLD}}
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+{{template "_header.html"}}
+<main id="main">
+
+  <div class="hero card">
+    <div class="badge">v{{.Site.Version}} · Zero Dependencies · Single Binary</div>
+    <h1>A compiler for structured data</h1>
+    <p>SchemaFlux reads entities with metadata, enriches them through an ordered pass pipeline, and emits output through pluggable backends. You define the schema. SchemaFlux handles the transformation.</p>
+    <div class="pipeline">
+      <span class="pipeline-step">markdown + frontmatter</span>
+      <span class="pipeline-arrow">&rarr;</span>
+      <span class="pipeline-step active">12 passes</span>
+      <span class="pipeline-arrow">&rarr;</span>
+      <span class="pipeline-step">output</span>
+    </div>
+    <div class="install-block">
+      <code>go install github.com/greynewell/schemaflux/cmd/schemaflux@latest</code>
+      <button class="copy-btn" data-copy="go install github.com/greynewell/schemaflux/cmd/schemaflux@latest"><span>Copy</span></button>
+    </div>
+  </div>
+
+  {{if .Taxonomies}}
+  <section class="browse-section">
+    <h2>Browse Documentation</h2>
+    <div class="taxonomy-pills">
+      {{range .Taxonomies}}
+      <a href="/{{.Name}}/" class="meta-pill">{{.Label}} ({{len .Entries}})</a>
+      {{end}}
+    </div>
+  </section>
+  {{end}}
+
+  <section>
+    <h2>Documentation</h2>
+    <div class="entity-grid">
+      {{range .Entities}}
+      <a href="/{{.Slug}}.html" class="entity-link">
+        <div>
+          <h3>{{field . "title"}}</h3>
+          <p>{{truncate (field . "description") 100}}</p>
+        </div>
+        <span class="arrow">&rarr;</span>
+      </a>
+      {{end}}
+    </div>
+  </section>
+
+  <section>
+    <h2>Features</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>Zero Dependencies</h3>
+        <p>Go standard library only. Custom YAML parser and markdown renderer built from scratch.</p>
+      </div>
+      <div class="feature-card">
+        <h3>12-Pass Pipeline</h3>
+        <p>Ordered, dependency-aware compiler passes transform the intermediate representation.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Taxonomy System</h3>
+        <p>Automatic grouping, pagination, A-Z indices, and letter pages for browsable categories.</p>
+      </div>
+      <div class="feature-card">
+        <h3>SEO Built-In</h3>
+        <p>JSON-LD, Open Graph, sitemaps, RSS feeds, robots.txt, and llms.txt generated automatically.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Go Templates</h3>
+        <p>60+ custom template functions built on Go html/template. Full control over output.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Fast Builds</h3>
+        <p>2,000 entities compiled to 2,300+ pages in under 500ms with concurrent rendering.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+{{template "_footer.html" .}}
+<script src="/main.js" defer></script>
+</body>
+</html>
