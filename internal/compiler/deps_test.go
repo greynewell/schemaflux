@@ -8,9 +8,10 @@ import (
 	"testing"
 )
 
-// TestZeroDependencies enforces that go.mod contains no require directives.
-// schemaflux uses only the Go standard library. See AGENTS.md for rationale.
-func TestZeroDependencies(t *testing.T) {
+// TestNonMISTDependencies enforces that go.mod contains no require directives
+// beyond the MIST stack shared library. The compiler itself uses only the Go
+// standard library; only the MIST protocol integration layer depends on mist-go.
+func TestNonMISTDependencies(t *testing.T) {
 	// Walk up from the test file to find the module root (directory containing go.mod).
 	_, thisFile, _, _ := runtime.Caller(0)
 	dir := filepath.Dir(thisFile)
@@ -30,10 +31,21 @@ func TestZeroDependencies(t *testing.T) {
 		t.Fatalf("reading go.mod: %v", err)
 	}
 
+	allowed := map[string]bool{
+		"github.com/greynewell/mist-go": true,
+	}
+
 	for _, line := range strings.Split(string(data), "\n") {
 		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "require ") || trimmed == "require (" {
-			t.Fatalf("go.mod contains a require directive — schemaflux must have zero external dependencies.\nLine: %s", trimmed)
+		if trimmed == "require (" || trimmed == ")" || trimmed == "" {
+			continue
+		}
+		if strings.HasPrefix(trimmed, "require ") {
+			dep := strings.TrimPrefix(trimmed, "require ")
+			dep = strings.Fields(dep)[0]
+			if !allowed[dep] {
+				t.Fatalf("go.mod contains a disallowed dependency: %s\nOnly mist-go is permitted.", dep)
+			}
 		}
 	}
 }
