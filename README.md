@@ -4,32 +4,37 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Dependencies](https://img.shields.io/badge/Dependencies-0-brightgreen)](#)
 
-**Unified Schema Transformation Pipeline | The Data-to-View Compiler**
+**A compiler for structured data.**
 
-A fast, zero-dependency static site generator and structured data transformation engine. SchemaFlux compiles schema-driven content into deterministic, type-safe views.
+SchemaFlux reads entities with metadata, enriches them through an ordered pass pipeline, and emits output through pluggable backends. You define the schema. SchemaFlux handles the transformation.
 
-**Zero external dependencies** — SchemaFlux uses only the Go standard library.
-- Single static binary, compiles anywhere Go does
-- No supply-chain risk from third-party modules
-- Smaller binary, faster builds
+```
+markdown + frontmatter  ->  frontend  ->  12 passes  ->  backend  ->  output
+```
+
+Zero external dependencies. Single static binary. Go standard library only.
+
+## How it works
+
+SchemaFlux operates on **entities** — units of structured data with fields, taxonomies, and relationships. A config file defines the schema; a pipeline of passes resolves slugs, sorts, enriches, groups, computes relationships, and validates. Backends consume the resulting IR to produce output.
 
 ```
 1,997 entities -> 2,328 pages in ~500ms
 ```
 
-## Why
+The compiler pipeline:
 
-Most static site generators are built for blogs. SchemaFlux is built for **structured datasets** — collections of entities with rich metadata, taxonomies, and relationships. Feed it a directory of markdown files with frontmatter and a YAML config, and it generates a full site with:
+1. **Frontend** parses markdown files with YAML frontmatter into an intermediate representation
+2. **Passes** transform the IR: slug resolution, sorting, enrichment, taxonomy grouping, related entity scoring, graph enrichment, content analysis, URL resolution, schema generation, validation
+3. **Backend** emits output from the finalized IR
 
-- Taxonomy pages with automatic categorization and pagination
-- A-Z letter indices
-- Client-side search (generated at build time, zero server dependencies)
-- D3.js chart data for visualizations
-- SEO: sitemaps, robots.txt, JSON-LD, Open Graph, `llms.txt`
-- RSS feeds
-- Enrichment data via JSON sidecar files
+The IR is immutable once passes complete — backends read but never modify.
 
-## Quick Start
+## Use case: static sites
+
+The built-in HTML backend compiles structured data into a complete static site with taxonomy pages, pagination, A-Z indices, search index, JSON-LD, Open Graph, sitemaps, RSS, and `llms.txt`.
+
+## Quick start
 
 ```bash
 go install github.com/greynewell/schemaflux/cmd/schemaflux@latest
@@ -39,11 +44,9 @@ schemaflux build --config schemaflux.yaml
 
 ## Config
 
-SchemaFlux is driven by a single `schemaflux.yaml`:
-
 ```yaml
 site:
-  name: "My Site"
+  name: "My Dataset"
   base_url: "https://example.com"
 
 paths:
@@ -55,7 +58,6 @@ taxonomies:
   - name: category
     label: Categories
     field: category
-    template: hub.html
 
 templates:
   entity: entity.html
@@ -65,25 +67,24 @@ templates:
 ## Architecture
 
 ```
-cmd/schemaflux/    CLI entrypoint
+compiler.Compile(cfg)
+  -> frontend.Parse()        # markdown + YAML -> IR
+  -> pass.Registry.RunAll()  # 12 ordered passes
+  -> backend.Emit()          # IR -> output
+
 internal/
-  build/           Build pipeline orchestration
-  config/          YAML config parsing
-  entity/          Entity loading and metadata
-  loader/          Markdown + frontmatter parsing
-  render/          Template engine and page contexts
-  taxonomy/        Taxonomy generation, pagination, A-Z indices
-  enrichment/      JSON sidecar enrichment data
-  affiliate/       Affiliate link matching
-  output/          File writing
-  schema/          JSON-LD structured data
+  compiler/
+    frontend/    Parse structured data into IR
+    ir/          Program, ResolvedEntity, TaxonomyGroup
+    pass/        12 passes with declared dependencies
+    backend/     Pluggable output (html/ ships built-in)
+  config/        YAML config types
+  entity/        Untyped AST
+  markdown/      Markdown-to-HTML renderer
+  yaml/          YAML parser
 ```
 
-~7,100 lines of Go. Zero external dependencies.
-
 ## Badge
-
-If your project is compiled with SchemaFlux, add this badge to your README:
 
 [![Compiled with SchemaFlux](https://img.shields.io/badge/compiled%20with-SchemaFlux-5B7B5E)](https://schemaflux.dev)
 
