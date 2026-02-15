@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="{{.Site.Language}}">
+<head>
+{{template "_head.html"}}
+<title>{{field .Entity "title"}} — {{.Site.Name}}</title>
+<meta name="description" content="{{field .Entity "description"}}">
+<meta property="og:title" content="{{field .Entity "title"}} — {{.Site.Name}}">
+<meta property="og:description" content="{{field .Entity "description"}}">
+<meta property="og:url" content="{{.CanonicalURL}}">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="{{.Site.Name}}">
+<link rel="canonical" href="{{.CanonicalURL}}">
+{{.JsonLD}}
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+{{template "_header.html"}}
+<main id="main">
+
+  {{if .Breadcrumbs}}
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    {{range $i, $bc := .Breadcrumbs}}{{if $i}} / {{end}}{{if $bc.URL}}<a href="{{$bc.URL}}">{{$bc.Name}}</a>{{else}}<span>{{$bc.Name}}</span>{{end}}{{end}}
+  </nav>
+  {{end}}
+
+  <article>
+    <h1>{{field .Entity "title"}}</h1>
+
+    <div class="entity-meta">
+      {{if .ReadingTime}}<span>{{.ReadingTime}} min read</span>{{end}}
+      {{if .WordCount}}<span>{{formatNumber .WordCount}} words</span>{{end}}
+      {{if hasField .Entity "section"}}<span>{{field .Entity "section"}}</span>{{end}}
+    </div>
+
+    {{if hasField .Entity "tags"}}
+    <div class="entity-tags">
+      {{range getStringSlice .Entity "tags"}}
+      <a href="/tag/{{slug .}}.html" class="meta-pill">{{.}}</a>
+      {{end}}
+    </div>
+    {{end}}
+
+    {{if .TOC}}
+    <nav class="toc" aria-label="Table of contents">
+      <h2>Contents</h2>
+      <ul>
+        {{range .TOC}}
+        <li class="toc-h{{.Level}}"><a href="#{{.ID}}">{{.Text}}</a></li>
+        {{end}}
+      </ul>
+    </nav>
+    {{end}}
+
+    <div class="entity-body">
+      {{if hasField .Entity "body"}}{{markdown (field .Entity "body")}}{{end}}
+    </div>
+
+    {{if .Related}}
+    <section>
+      <h2>Related</h2>
+      <div class="entity-grid">
+        {{range .Related}}
+        <a href="/{{.Slug}}.html" class="entity-link">
+          <div>
+            <h3>{{field . "title"}}</h3>
+            <p>{{truncate (field . "description") 80}}</p>
+          </div>
+          <span class="arrow">&rarr;</span>
+        </a>
+        {{end}}
+      </div>
+    </section>
+    {{end}}
+  </article>
+
+</main>
+{{template "_footer.html" .}}
+<script src="/main.js" defer></script>
+</body>
+</html>

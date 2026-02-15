@@ -1,0 +1,114 @@
+site:
+  name: "SchemaFlux"
+  base_url: "https://schemaflux.dev"
+  description: "A compiler for structured data. Zero dependencies. Single binary."
+  language: "en"
+  version: "0.1.0"
+  author: "Grey Newell"
+  author_url: "https://greynewell.com"
+  license: "MIT"
+  cname: "schemaflux.dev"
+  repo_url: "https://github.com/greynewell/schemaflux"
+
+paths:
+  data: "content"
+  templates: "templates"
+  output: "output"
+
+data:
+  format: "markdown"
+  entity_type: "page"
+  entity_slug:
+    source: "filename"
+
+taxonomies:
+  - name: "section"
+    label: "Sections"
+    label_singular: "Section"
+    field: "section"
+    multi_value: false
+    min_entities: 1
+    letter_page_threshold: 100
+    hub_title: "{{.Name}}"
+    hub_meta_description: "SchemaFlux documentation: {{.Name}}"
+    index_description: "Browse SchemaFlux documentation by section."
+
+  - name: "tag"
+    label: "Tags"
+    label_singular: "Tag"
+    field: "tags"
+    multi_value: true
+    min_entities: 1
+    letter_page_threshold: 100
+    hub_title: "{{.Name}}"
+    hub_meta_description: "SchemaFlux documentation tagged {{.Name}}."
+    index_description: "Browse SchemaFlux documentation by topic."
+
+pagination:
+  entities_per_page: 48
+
+structured_data:
+  entity_type: "TechArticle"
+  field_mappings:
+    name: "title"
+    description: "description"
+    author: "author"
+  extra_keywords:
+    - "SchemaFlux"
+    - "static site generator"
+    - "structured data compiler"
+    - "Go"
+  date_published: "2025-02-14"
+  homepage_schemas:
+    - "WebSite"
+    - "ItemList"
+  entity_schemas:
+    - "TechArticle"
+    - "BreadcrumbList"
+  hub_schemas:
+    - "CollectionPage"
+    - "BreadcrumbList"
+  index_schemas:
+    - "ItemList"
+    - "BreadcrumbList"
+
+sitemap:
+  max_urls_per_file: 50000
+  priorities:
+    homepage: "1.0"
+    entity: "0.8"
+    taxonomy_index: "0.7"
+    hub_page_1: "0.6"
+    hub_page_n: "0.4"
+    letter_page: "0.5"
+  change_freqs:
+    homepage: "daily"
+    entity: "weekly"
+    taxonomy_index: "weekly"
+    hub: "weekly"
+    letter_page: "weekly"
+
+robots:
+  allow_all: true
+  extra_bots:
+    - "GPTBot"
+    - "ClaudeBot"
+    - "PerplexityBot"
+
+llms_txt:
+  enabled: true
+  tagline: "A compiler for structured data. Zero dependencies. Single binary."
+  taxonomies:
+    - "section"
+
+templates:
+  entity: "entity.html"
+  homepage: "index.html"
+  hub: "hub.html"
+  taxonomy_index: "taxonomy_index.html"
+
+output:
+  clean_build: false
+  minify: false
+  extract_css: "styles.css"
+  extract_js: "main.js"

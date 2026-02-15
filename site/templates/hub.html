@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="{{.Site.Language}}">
+<head>
+{{template "_head.html"}}
+<title>{{.Entry.Name}} — {{.Taxonomy.Label}} — {{.Site.Name}}</title>
+<meta name="description" content="SchemaFlux documentation: {{.Entry.Name}}. Showing {{len .Entities}} of {{.Pagination.TotalItems}} pages.">
+<meta property="og:title" content="{{.Entry.Name}} — {{.Site.Name}}">
+<meta property="og:description" content="SchemaFlux documentation: {{.Entry.Name}}.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{.Site.Name}}">
+{{$curPage := index .Pagination.PageURLs (sub .Pagination.CurrentPage 1)}}<link rel="canonical" href="{{.Site.BaseURL}}{{$curPage.URL}}">
+{{.JsonLD}}
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+{{template "_header.html"}}
+<main id="main">
+
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    {{range $i, $bc := .Breadcrumbs}}{{if $i}} / {{end}}{{if $bc.URL}}<a href="{{$bc.URL}}">{{$bc.Name}}</a>{{else}}<span>{{$bc.Name}}</span>{{end}}{{end}}
+  </nav>
+
+  <h1>{{.Entry.Name}}</h1>
+  <p class="hub-subheading">
+    {{if gt .Pagination.TotalPages 1}}Showing {{add .Pagination.StartIndex 1}}&ndash;{{.Pagination.EndIndex}} of {{formatNumber .Pagination.TotalItems}} pages
+    {{else}}{{formatNumber .Pagination.TotalItems}} page{{if ne .Pagination.TotalItems 1}}s{{end}}
+    {{end}}
+  </p>
+
+  <div class="entity-grid">
+    {{range .Entities}}
+    <a href="/{{.Slug}}.html" class="entity-link">
+      <div>
+        <h3>{{field . "title"}}</h3>
+        <p>{{truncate (field . "description") 100}}</p>
+      </div>
+      <span class="arrow">&rarr;</span>
+    </a>
+    {{end}}
+  </div>
+
+  {{if gt .Pagination.TotalPages 1}}
+  <nav class="pagination" aria-label="Pagination">
+    {{if .Pagination.PrevURL}}<a href="{{.Pagination.PrevURL}}" class="pagination-link">&larr; Previous</a>{{end}}
+    <div class="pagination-pages">
+      {{range .Pagination.PageURLs}}
+      {{if eq .Number $.Pagination.CurrentPage}}<span class="pagination-link current">{{.Number}}</span>
+      {{else}}<a href="{{.URL}}" class="pagination-link">{{.Number}}</a>{{end}}
+      {{end}}
+    </div>
+    {{if .Pagination.NextURL}}<a href="{{.Pagination.NextURL}}" class="pagination-link">Next &rarr;</a>{{end}}
+  </nav>
+  {{end}}
+
+</main>
+{{template "_footer.html" .}}
+<script src="/main.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "background_color": "#FAFAF7",
+  "description": "A compiler for structured data. Zero dependencies. Single binary.",
+  "display": "standalone",
+  "name": "SchemaFlux",
+  "short_name": "SchemaFlux",
+  "start_url": "/",
+  "theme_color": "#5B7B5E"
+}

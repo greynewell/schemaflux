@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="{{.Site.Language}}">
+<head>
+{{template "_head.html"}}
+<title>{{.Taxonomy.Label}} — {{.Site.Name}}</title>
+<meta name="description" content="{{.Taxonomy.Config.IndexDescription}}">
+<meta property="og:title" content="{{.Taxonomy.Label}} — {{.Site.Name}}">
+<meta property="og:description" content="{{.Taxonomy.Config.IndexDescription}}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{.Site.Name}}">
+<link rel="canonical" href="{{.Site.BaseURL}}/{{.Taxonomy.Name}}/">
+{{.JsonLD}}
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+{{template "_header.html"}}
+<main id="main">
+
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    {{range $i, $bc := .Breadcrumbs}}{{if $i}} / {{end}}{{if $bc.URL}}<a href="{{$bc.URL}}">{{$bc.Name}}</a>{{else}}<span>{{$bc.Name}}</span>{{end}}{{end}}
+  </nav>
+
+  <h1>{{.Taxonomy.Label}}</h1>
+  <p class="taxonomy-description">{{.Taxonomy.Config.IndexDescription}}</p>
+
+  {{if .HasLetters}}
+  <section class="popular-section">
+    <h2>Most Popular</h2>
+    <div class="entry-grid">
+      {{range .TopEntries}}
+      <a href="/{{$.Taxonomy.Name}}/{{.Slug}}.html" class="entry-card card">
+        <h3>{{.Name}}</h3>
+        <span class="entry-count">{{formatNumber (len .Entities)}} pages</span>
+      </a>
+      {{end}}
+    </div>
+  </section>
+
+  <section class="letter-nav-section">
+    <h2>Browse by Letter</h2>
+    <div class="letter-nav">
+      {{range .Letters}}
+      <a href="/{{$.Taxonomy.Name}}/letter-{{lower .}}.html" class="letter-link">{{.}}</a>
+      {{end}}
+    </div>
+  </section>
+
+  {{else}}
+  <div class="entry-grid">
+    {{range .Entries}}
+    <a href="/{{$.Taxonomy.Name}}/{{.Slug}}.html" class="entry-card card">
+      <h3>{{.Name}}</h3>
+      <span class="entry-count">{{formatNumber (len .Entities)}} pages</span>
+    </a>
+    {{end}}
+  </div>
+  {{end}}
+
+</main>
+{{template "_footer.html" .}}
+<script src="/main.js" defer></script>
+</body>
+</html>

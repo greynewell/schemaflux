@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230c0d10'/%3E%3Cpath d='M8 22 L16 10 L24 22' fill='none' stroke='%236ee7b7' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='16' cy='22' r='2' fill='%236ee7b7'/%3E%3C/svg%3E">
+<link rel="manifest" href="/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+
+<title>Configuration Reference — SchemaFlux</title>
+<meta name="description" content="Complete reference for the schemaflux.yaml configuration file. Covers site settings, paths, data schema, taxonomies, pagination, structured data, and output options.">
+<meta property="og:title" content="Configuration Reference — SchemaFlux">
+<meta property="og:description" content="Complete reference for the schemaflux.yaml configuration file. Covers site settings, paths, data schema, taxonomies, pagination, structured data, and output options.">
+<meta property="og:url" content="https://schemaflux.dev/configuration.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="SchemaFlux">
+<link rel="canonical" href="https://schemaflux.dev/configuration.html">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","datePublished":"2025-02-14","description":"Complete reference for the schemaflux.yaml configuration file. Covers site settings, paths, data schema, taxonomies, pagination, structured data, and output options.","keywords":"config, yaml, reference, SchemaFlux, static site generator, structured data compiler, Go","name":"Configuration Reference","url":"https://schemaflux.dev/configuration.html"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://schemaflux.dev/","name":"Home","position":1},{"@type":"ListItem","name":"Configuration Reference","position":2}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <a href="/" class="site-brand">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><rect width="32" height="32" rx="6" fill="currentColor" opacity="0.1"/><path d="M8 22 L16 10 L24 22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="22" r="2" fill="currentColor"/></svg>
+    SchemaFlux
+  </a>
+  <nav>
+    <a href="/overview.html">Docs</a>
+    <a href="/section/">Sections</a>
+    <a href="https://github.com/greynewell/schemaflux" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+</header>
+
+<main id="main">
+
+  
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="https://schemaflux.dev/">Home</a> / <span>Configuration Reference</span>
+  </nav>
+  
+
+  <article>
+    <h1>Configuration Reference</h1>
+
+    <div class="entity-meta">
+      <span>4 min read</span>
+      <span>767 words</span>
+      <span>Reference</span>
+    </div>
+
+    
+    <div class="entity-tags">
+      
+      <a href="/tag/config.html" class="meta-pill">config</a>
+      
+      <a href="/tag/yaml.html" class="meta-pill">yaml</a>
+      
+      <a href="/tag/reference.html" class="meta-pill">reference</a>
+      
+    </div>
+    
+
+    
+    <nav class="toc" aria-label="Table of contents">
+      <h2>Contents</h2>
+      <ul>
+        
+        <li class="toc-h2"><a href="#overview">Overview</a></li>
+        
+        <li class="toc-h2"><a href="#site">Site</a></li>
+        
+        <li class="toc-h2"><a href="#paths">Paths</a></li>
+        
+        <li class="toc-h2"><a href="#data">Data</a></li>
+        
+        <li class="toc-h3"><a href="#field-types">Field Types</a></li>
+        
+        <li class="toc-h2"><a href="#taxonomies">Taxonomies</a></li>
+        
+        <li class="toc-h2"><a href="#pagination">Pagination</a></li>
+        
+        <li class="toc-h2"><a href="#structured-data">Structured Data</a></li>
+        
+        <li class="toc-h2"><a href="#templates">Templates</a></li>
+        
+        <li class="toc-h2"><a href="#output">Output</a></li>
+        
+        <li class="toc-h2"><a href="#sitemap">Sitemap</a></li>
+        
+        <li class="toc-h2"><a href="#rss">RSS</a></li>
+        
+        <li class="toc-h2"><a href="#robots">Robots</a></li>
+        
+        <li class="toc-h2"><a href="#llms-txt">LLMs.txt</a></li>
+        
+        <li class="toc-h2"><a href="#search">Search</a></li>
+        
+        <li class="toc-h2"><a href="#sort">Sort</a></li>
+        
+        <li class="toc-h2"><a href="#related-entities">Related Entities</a></li>
+        
+        <li class="toc-h2"><a href="#affiliates">Affiliates</a></li>
+        
+        <li class="toc-h2"><a href="#extra">Extra</a></li>
+        
+      </ul>
+    </nav>
+    
+
+    <div class="entity-body">
+      
+    </div>
+
+    
+  </article>
+
+</main>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-meta">
+      <span>SchemaFlux v0.1.0</span>
+      · <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener">MIT License</a>
+      · Built by <a href="https://greynewell.com" target="_blank" rel="noopener">Grey Newell</a>
+    </div>
+    <div class="footer-links">
+      <a href="/sitemap.xml">Sitemap</a>
+      <a href="/llms.txt">llms.txt</a>
+      <a href="https://github.com/greynewell/schemaflux" target="_blank" rel="noopener">Source</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/main.js" defer></script>
+<div style="text-align:center;padding:12px 8px;font-size:11px;opacity:0.6;"><a href="https://schemaflux.dev" style="color:inherit;">Compiled with SchemaFlux</a></div></body>
+</html>
