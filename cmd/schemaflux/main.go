@@ -7,14 +7,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/greynewell/schemaflux/internal/build"
+	"github.com/greynewell/schemaflux/internal/compiler"
 	"github.com/greynewell/schemaflux/internal/config"
 )
 
 func main() {
 	buildCmd := flag.NewFlagSet("build", flag.ExitOnError)
 	configPath := buildCmd.String("config", "schemaflux.yaml", "Path to config file")
-	force := buildCmd.Bool("force", false, "Force full rebuild (ignore cache)")
+	_ = buildCmd.Bool("force", false, "Force full rebuild (ignore cache)")
 
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr, "Usage: schemaflux <command> [flags]\n\nCommands:\n  build    Build the static site\n")
@@ -35,8 +35,7 @@ func main() {
 			log.Fatalf("Error loading config: %v", err)
 		}
 
-		builder := build.NewBuilder(cfg, *force)
-		if err := builder.Build(); err != nil {
+		if err := compiler.Compile(cfg); err != nil {
 			log.Fatalf("Build failed: %v", err)
 		}
 	default:

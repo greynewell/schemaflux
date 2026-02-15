@@ -1,4 +1,4 @@
-package loader
+package frontend
 
 import (
 	"fmt"
@@ -7,18 +7,18 @@ import (
 	"strings"
 
 	"github.com/greynewell/schemaflux/internal/config"
-	"github.com/greynewell/schemaflux/internal/yaml"
 	"github.com/greynewell/schemaflux/internal/entity"
+	"github.com/greynewell/schemaflux/internal/yaml"
 )
 
-// MarkdownLoader loads entities from markdown files with YAML frontmatter.
-type MarkdownLoader struct {
-	Config *config.Config
+// markdownLoader loads entities from markdown files with YAML frontmatter.
+type markdownLoader struct {
+	cfg *config.Config
 }
 
-// Load reads all .md files from the data directory and parses them into entities.
-func (l *MarkdownLoader) Load() ([]*entity.Entity, error) {
-	dataDir := l.Config.Paths.Data
+// load reads all .md files from the data directory and parses them into entities.
+func (l *markdownLoader) load() ([]*entity.Entity, error) {
+	dataDir := l.cfg.Paths.Data
 	entries, err := os.ReadDir(dataDir)
 	if err != nil {
 		return nil, fmt.Errorf("reading data dir %s: %w", dataDir, err)
@@ -42,7 +42,7 @@ func (l *MarkdownLoader) Load() ([]*entity.Entity, error) {
 	return entities, nil
 }
 
-func (l *MarkdownLoader) parseFile(path string) (*entity.Entity, error) {
+func (l *markdownLoader) parseFile(path string) (*entity.Entity, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -50,22 +50,17 @@ func (l *MarkdownLoader) parseFile(path string) (*entity.Entity, error) {
 
 	content := string(data)
 
-	// Split frontmatter from body
 	frontmatter, body, err := splitFrontmatter(content)
 	if err != nil {
 		return nil, fmt.Errorf("splitting frontmatter: %w", err)
 	}
 
-	// Parse YAML frontmatter
 	fields, err := yaml.UnmarshalMap([]byte(frontmatter))
 	if err != nil {
 		return nil, fmt.Errorf("parsing frontmatter YAML: %w", err)
 	}
 
-	// Derive slug
 	slug := l.deriveSlug(path, fields)
-
-	// Parse body sections
 	sections := l.parseSections(body)
 
 	return &entity.Entity{
@@ -77,14 +72,12 @@ func (l *MarkdownLoader) parseFile(path string) (*entity.Entity, error) {
 	}, nil
 }
 
-// splitFrontmatter separates YAML frontmatter (between --- delimiters) from the body.
 func splitFrontmatter(content string) (string, string, error) {
 	content = strings.TrimSpace(content)
 	if !strings.HasPrefix(content, "---") {
 		return "", content, nil
 	}
 
-	// Find closing ---
 	rest := content[3:]
 	idx := strings.Index(rest, "\n---")
 	if idx < 0 {
@@ -96,8 +89,8 @@ func splitFrontmatter(content string) (string, string, error) {
 	return fm, body, nil
 }
 
-func (l *MarkdownLoader) deriveSlug(path string, fields map[string]interface{}) string {
-	source := l.Config.Data.EntitySlug.Source
+func (l *markdownLoader) deriveSlug(path string, fields map[string]interface{}) string {
+	source := l.cfg.Data.EntitySlug.Source
 	if strings.HasPrefix(source, "field:") {
 		fieldName := source[6:]
 		if v, ok := fields[fieldName]; ok {
@@ -106,15 +99,14 @@ func (l *MarkdownLoader) deriveSlug(path string, fields map[string]interface{}) 
 			}
 		}
 	}
-	// Default: derive from filename
 	base := filepath.Base(path)
 	return strings.TrimSuffix(base, filepath.Ext(base))
 }
 
-func (l *MarkdownLoader) parseSections(body string) map[string]interface{} {
+func (l *markdownLoader) parseSections(body string) map[string]interface{} {
 	sections := make(map[string]interface{})
 
-	for _, sectionCfg := range l.Config.Data.BodySections {
+	for _, sectionCfg := range l.cfg.Data.BodySections {
 		content := extractSection(body, sectionCfg.Header)
 		if content == "" {
 			continue
@@ -137,7 +129,6 @@ func (l *MarkdownLoader) parseSections(body string) map[string]interface{} {
 	return sections
 }
 
-// extractSection extracts the content under a ## heading until the next ## heading.
 func extractSection(body, header string) string {
 	marker := "## " + header
 	idx := strings.Index(body, marker)
@@ -145,16 +136,13 @@ func extractSection(body, header string) string {
 		return ""
 	}
 
-	// Start after the heading line
 	start := idx + len(marker)
-	// Find newline after heading
 	nlIdx := strings.Index(body[start:], "\n")
 	if nlIdx < 0 {
 		return ""
 	}
 	start += nlIdx + 1
 
-	// Find next ## heading or end of body
 	rest := body[start:]
 	nextH2 := strings.Index(rest, "\n## ")
 	if nextH2 >= 0 {
@@ -164,7 +152,6 @@ func extractSection(body, header string) string {
 	return strings.TrimSpace(rest)
 }
 
-// parseUnorderedList extracts items from a markdown unordered list.
 func parseUnorderedList(content string) []string {
 	var items []string
 	for _, line := range strings.Split(content, "\n") {
@@ -178,16 +165,13 @@ func parseUnorderedList(content string) []string {
 	return items
 }
 
-// parseOrderedList extracts items from a markdown ordered list.
 func parseOrderedList(content string) []string {
 	var items []string
 	for _, line := range strings.Split(content, "\n") {
 		line = strings.TrimSpace(line)
-		// Match "1. ", "2. ", etc.
 		if len(line) >= 3 {
 			dotIdx := strings.Index(line, ". ")
 			if dotIdx > 0 && dotIdx <= 4 {
-				// Verify prefix is all digits
 				prefix := line[:dotIdx]
 				allDigits := true
 				for _, c := range prefix {
@@ -205,12 +189,11 @@ func parseOrderedList(content string) []string {
 	return items
 }
 
-// parseFAQs extracts FAQ pairs from ### headings and their following paragraphs.
 func parseFAQs(content string) []entity.FAQ {
 	var faqs []entity.FAQ
 
 	parts := strings.Split("\n"+content, "\n### ")
-	for _, part := range parts[1:] { // skip first empty split
+	for _, part := range parts[1:] {
 		lines := strings.SplitN(part, "\n", 2)
 		question := strings.TrimSpace(lines[0])
 		answer := ""
