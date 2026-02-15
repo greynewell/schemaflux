@@ -4,3 +4,4 @@ docs/
 .cache/
 sites/
 *-output/
+site/output/
