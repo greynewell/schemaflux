@@ -481,6 +481,72 @@ func TestRawHTML(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// Raw HTML block passthrough (pre, script, style)
+// ---------------------------------------------------------------------------
+
+func TestRawHTMLBlockPre(t *testing.T) {
+	in := "<pre class=\"mermaid\">\nsequenceDiagram\n    A->>B: hello\n    B-->>A: world\n</pre>"
+	want := "<pre class=\"mermaid\">\nsequenceDiagram\n    A->>B: hello\n    B-->>A: world\n</pre>\n"
+	got := Render(in)
+	if got != want {
+		t.Errorf("Render(pre block)\n  got:  %q\n  want: %q", got, want)
+	}
+}
+
+func TestRawHTMLBlockPreWithBlankLines(t *testing.T) {
+	in := "<pre class=\"mermaid\">\nsequenceDiagram\n    participant UI as UI Thread\n\n    UI->>BG: message\n</pre>"
+	want := "<pre class=\"mermaid\">\nsequenceDiagram\n    participant UI as UI Thread\n\n    UI->>BG: message\n</pre>\n"
+	got := Render(in)
+	if got != want {
+		t.Errorf("Render(pre block with blanks)\n  got:  %q\n  want: %q", got, want)
+	}
+}
+
+func TestRawHTMLBlockScript(t *testing.T) {
+	in := "<script>\nconsole.log(\"hello\");\n</script>"
+	want := "<script>\nconsole.log(\"hello\");\n</script>\n"
+	got := Render(in)
+	if got != want {
+		t.Errorf("Render(script block)\n  got:  %q\n  want: %q", got, want)
+	}
+}
+
+func TestRawHTMLBlockStyle(t *testing.T) {
+	in := "<style>\nbody { color: red; }\n</style>"
+	want := "<style>\nbody { color: red; }\n</style>\n"
+	got := Render(in)
+	if got != want {
+		t.Errorf("Render(style block)\n  got:  %q\n  want: %q", got, want)
+	}
+}
+
+func TestRawHTMLBlockPreClosingOnSameLine(t *testing.T) {
+	in := "<pre>code</pre>"
+	want := "<pre>code</pre>\n"
+	got := Render(in)
+	if got != want {
+		t.Errorf("Render(pre same line close)\n  got:  %q\n  want: %q", got, want)
+	}
+}
+
+func TestRawHTMLBlockFollowedByMarkdown(t *testing.T) {
+	in := "<pre class=\"mermaid\">\nA->>B: hello\n</pre>\n\n## Next Section\n\nSome text"
+	got := Render(in)
+	if !strings.Contains(got, "A->>B: hello") {
+		t.Errorf("expected raw >> in pre block, got: %s", got)
+	}
+	if strings.Contains(got, "&gt;") {
+		t.Errorf(">> should not be escaped inside pre block, got: %s", got)
+	}
+	if !strings.Contains(got, "<h2>Next Section</h2>") {
+		t.Errorf("expected h2 after pre block, got: %s", got)
+	}
+	if !strings.Contains(got, "<p>Some text</p>") {
+		t.Errorf("expected paragraph after pre block, got: %s", got)
+	}
+}
+
+// ---------------------------------------------------------------------------
 // HTML entity escaping
 // ---------------------------------------------------------------------------
 

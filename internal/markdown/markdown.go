@@ -48,7 +48,26 @@ func Render(markdown string) string {
 			continue
 		}
 
-		// --- Raw HTML passthrough ---
+		// --- Raw HTML block passthrough (CommonMark type 1: pre, script, style) ---
+		if tag, ok := rawHTMLBlockStart(line); ok {
+			out.WriteString(line)
+			out.WriteByte('\n')
+			i++
+			closeTag := "</" + tag
+			// Pass through all lines until the closing tag is found.
+			for i < len(lines) {
+				out.WriteString(lines[i])
+				out.WriteByte('\n')
+				if strings.Contains(strings.ToLower(lines[i]), closeTag) {
+					i++
+					break
+				}
+				i++
+			}
+			continue
+		}
+
+		// --- Raw HTML passthrough (single-line) ---
 		if isRawHTML(line) {
 			out.WriteString(line)
 			out.WriteByte('\n')
@@ -184,6 +203,20 @@ func fencedCodeStart(line string) (lang string, ok bool) {
 
 func isFencedCodeEnd(line string) bool {
 	return strings.TrimSpace(line) == "```"
+}
+
+// rawHTMLBlockStart detects CommonMark type 1 HTML blocks: <pre>, <script>,
+// <style>. These blocks pass through all content (including blank lines and
+// special characters) until the closing tag is found.
+func rawHTMLBlockStart(line string) (tag string, ok bool) {
+	trimmed := strings.ToLower(strings.TrimSpace(line))
+	for _, t := range []string{"pre", "script", "style"} {
+		if strings.HasPrefix(trimmed, "<"+t) &&
+			(len(trimmed) == len(t)+1 || trimmed[len(t)+1] == ' ' || trimmed[len(t)+1] == '>' || trimmed[len(t)+1] == '\t') {
+			return t, true
+		}
+	}
+	return "", false
 }
 
 var htmlTagRegex = regexp.MustCompile(`^</?[a-zA-Z][a-zA-Z0-9]*[\s>!/]`)
