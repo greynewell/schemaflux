@@ -18,15 +18,44 @@ Guidelines for AI agents and contributors working on SchemaFlux.
 
 ## Architecture
 
-The build pipeline flows: `loader -> entity -> taxonomy -> render -> output`. Each package has a single responsibility. The `build` package orchestrates the pipeline.
+SchemaFlux is structured as a data-to-view compiler with frontend/middle-end/backend separation:
+
+```
+compiler.Compile(cfg)
+  -> frontend.Parse()          # reads .md files, produces IR Program
+  -> pass.Registry.RunAll()    # 11 ordered passes transform the IR
+  -> backend.Emit()            # HTML backend maps IR to render contexts
+```
+
+**Compiler pipeline** (`internal/compiler/`):
+- `frontend/` — parses markdown + YAML frontmatter into `[]*ir.ResolvedEntity`
+- `ir/` — IR types: `Program`, `ResolvedEntity`, `TaxonomyGroup`, `Diagnostic`
+- `pass/` — 11 ordered passes (slug resolution, sort, enrichment, affiliate, taxonomy, related, graph enrichment, content analysis, URL resolution, schema, validation)
+- `backend/html/` — maps IR to render contexts, writes HTML files + sitemap/RSS/etc.
+
+**Stable foundations** (unchanged):
+- `config/` — config types + YAML loading
+- `entity/` — untyped AST (`Entity` struct with map-based fields)
+- `markdown/` — custom markdown-to-HTML renderer
+- `yaml/` — custom zero-dependency YAML parser
+
+**Utility libraries** (called by passes/backend):
+- `enrichment/` — JSON cache reading
+- `affiliate/` — affiliate link generation
+- `taxonomy/` — grouping logic
+- `render/` — template engine + context types
+- `output/` — sitemap, RSS, robots.txt, manifest writers
+- `schema/` — JSON-LD generator
 
 Templates use Go's `html/template`. Config uses YAML (parsed by `internal/yaml`). Content uses markdown with YAML frontmatter.
+
+The IR is immutable once passes complete — backends read but never modify.
 
 ## Implementation Order
 
 When adding features:
 1. Add config types to `internal/config/types.go`
 2. Write tests for the new behavior
-3. Implement in the appropriate package
-4. Wire into `internal/build/build.go`
+3. Implement as a new pass in `internal/compiler/pass/`
+4. Register the pass in `internal/compiler/compiler.go`
 5. Run `go test ./...` — all tests must pass
