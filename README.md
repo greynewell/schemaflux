@@ -80,3 +80,13 @@ internal/
 ```
 
 ~7,100 lines of Go. Zero external dependencies.
+
+## Badge
+
+If your project is compiled with SchemaFlux, add this badge to your README:
+
+[![Compiled with SchemaFlux](https://img.shields.io/badge/compiled%20with-SchemaFlux-5B7B5E)](https://schemaflux.dev)
+
+```markdown
+[![Compiled with SchemaFlux](https://img.shields.io/badge/compiled%20with-SchemaFlux-5B7B5E)](https://schemaflux.dev)
+```
