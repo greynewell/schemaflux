@@ -1,44 +1,35 @@
-# SchemaFlux
+# schemaflux
+
+Structured data compiler. Part of the [MIST stack](https://github.com/greynewell/mist-go).
 
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Dependencies](https://img.shields.io/badge/Dependencies-0-brightgreen)](#)
 
-**A compiler for structured data.**
-
-SchemaFlux reads entities with metadata, enriches them through an ordered pass pipeline, and emits output through pluggable backends. You define the schema. SchemaFlux handles the transformation.
-
 ```
 markdown + frontmatter  ->  frontend  ->  12 passes  ->  backend  ->  output
 ```
 
-Zero external dependencies. Single static binary. Go standard library only.
+Zero external deps. Single static binary.
 
 ## How it works
 
-SchemaFlux operates on **entities** — units of structured data with fields, taxonomies, and relationships. A config file defines the schema; a pipeline of passes resolves slugs, sorts, enriches, groups, computes relationships, and validates. Backends consume the resulting IR to produce output.
+Entities (structured data with fields, taxonomies, relationships) go in. A config defines the schema. Passes resolve slugs, sort, enrich, group, score relationships, validate. Backends emit output from the finalized IR.
 
 ```
 1,997 entities -> 2,328 pages in ~500ms
 ```
 
-The compiler pipeline:
+1. **Frontend** parses markdown + YAML frontmatter into IR
+2. **Passes** transform IR: slugs, sorting, enrichment, taxonomy grouping, related scoring, graph enrichment, content analysis, URL resolution, schema generation, validation
+3. **Backend** emits output. IR is immutable at this point.
 
-1. **Frontend** parses markdown files with YAML frontmatter into an intermediate representation
-2. **Passes** transform the IR: slug resolution, sorting, enrichment, taxonomy grouping, related entity scoring, graph enrichment, content analysis, URL resolution, schema generation, validation
-3. **Backend** emits output from the finalized IR
+The built-in HTML backend produces a complete static site: taxonomy pages, pagination, A-Z indices, search index, JSON-LD, Open Graph, sitemaps, RSS, `llms.txt`.
 
-The IR is immutable once passes complete — backends read but never modify.
-
-## Use case: static sites
-
-The built-in HTML backend compiles structured data into a complete static site with taxonomy pages, pagination, A-Z indices, search index, JSON-LD, Open Graph, sitemaps, RSS, and `llms.txt`.
-
-## Quick start
+## Install
 
 ```bash
 go install github.com/greynewell/schemaflux/cmd/schemaflux@latest
-
 schemaflux build --config schemaflux.yaml
 ```
 
@@ -48,17 +39,14 @@ schemaflux build --config schemaflux.yaml
 site:
   name: "My Dataset"
   base_url: "https://example.com"
-
 paths:
   content: "./content"
   output: "./output"
   templates: "./templates"
-
 taxonomies:
   - name: category
     label: Categories
     field: category
-
 templates:
   entity: entity.html
   homepage: index.html
