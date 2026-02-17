@@ -36,6 +36,14 @@ eleventyComputed:
         {% endif %}
       {% endfor %}
     </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Internals</div>
+      {% for item in collections.docs %}
+        {% if item.data.section == "Internals" %}
+        <a href="/docs/{{ item.fileSlug }}/"{% if item.fileSlug == doc.fileSlug %} class="active"{% endif %}>{{ item.data.title }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
   </aside>
   <article class="doc-content">
     <h1>{{ doc.data.title }}</h1>

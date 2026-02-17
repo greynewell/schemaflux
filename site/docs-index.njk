@@ -49,3 +49,17 @@ description: "Complete documentation for SchemaFlux, the structured data compile
     {% endfor %}
   </div>
 </div>
+
+<div class="docs-index-group">
+  <h3>Internals</h3>
+  <div class="docs-grid">
+    {% for doc in collections.docs %}
+      {% if doc.data.section == "Internals" %}
+      <a href="/docs/{{ doc.fileSlug }}/" class="doc-card">
+        <h4>{{ doc.data.title }}</h4>
+        <p>{{ doc.data.description }}</p>
+      </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
