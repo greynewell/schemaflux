@@ -34,6 +34,6 @@ jobs:
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_PAGES_TOKEN }}
           accountId: 9d791b952ac71d62858a2c1d919cec86
           command: pages deploy site/output --project-name=schemaflux-dev
