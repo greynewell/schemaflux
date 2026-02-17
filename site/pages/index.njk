@@ -1,0 +1,116 @@
+---
+layout: base.njk
+permalink: /
+title: ""
+description: "A compiler for structured data. SchemaFlux reads entities with metadata, enriches them through an ordered pass pipeline, and emits output through pluggable backends."
+headExtra: |
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "SchemaFlux",
+    "description": "A compiler for structured data. Zero dependencies. Single binary.",
+    "url": "https://schemaflux.dev",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Linux, macOS, Windows",
+    "programmingLanguage": "Go",
+    "author": {
+      "@type": "Person",
+      "name": "Grey Newell",
+      "url": "https://greynewell.com"
+    },
+    "license": "https://opensource.org/licenses/MIT",
+    "codeRepository": "https://github.com/greynewell/schemaflux",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+---
+
+<section class="hero">
+  <h1><span class="accent">Schema</span>Flux</h1>
+  <p class="tagline">A compiler for structured data</p>
+
+  <div class="terminal">
+    <code><span class="prompt">$ </span>go install github.com/greynewell/schemaflux/cmd/schemaflux@latest</code>
+  </div>
+
+  <p class="stats">
+    <span class="highlight">1,997 entities &rarr; 2,328 pages in ~500ms</span>
+    <span class="separator">&middot;</span>
+    Zero dependencies. Single binary.
+  </p>
+
+  <div class="cta-group">
+    <a href="/docs/quick-start/" class="btn btn-primary">Get Started</a>
+    <a href="{{ site.repo_url }}" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </div>
+</section>
+
+<section class="features">
+  <div class="feature-card">
+    <h3>Compiler Pipeline</h3>
+    <p>12 ordered passes transform your data from markdown to output. Each pass enriches the intermediate representation with computed metadata.</p>
+  </div>
+  <div class="feature-card">
+    <h3>Pluggable Backends</h3>
+    <p>Built-in HTML backend with taxonomy pages, JSON-LD, sitemaps, RSS, pagination, A-Z indices, and search.</p>
+  </div>
+  <div class="feature-card">
+    <h3>Zero Dependencies</h3>
+    <p>Go standard library only. Compiles to a single static binary. No runtime, no node_modules, no Docker needed.</p>
+  </div>
+  <div class="feature-card">
+    <h3>Structured Data</h3>
+    <p>JSON-LD schemas, Open Graph tags, XML sitemaps, RSS feeds, robots.txt, and llms.txt generated automatically.</p>
+  </div>
+</section>
+
+<h2>Documentation</h2>
+
+{% set sections = {} %}
+{% for doc in collections.docs %}
+  {% set sec = doc.data.section or "General" %}
+  {% if not sections[sec] %}
+    {% set sections = sections | dump | fromJson if false %}
+  {% endif %}
+{% endfor %}
+
+<div class="section-label">Getting Started</div>
+<div class="docs-grid">
+  {% for doc in collections.docs %}
+    {% if doc.data.section == "Getting Started" %}
+    <a href="/docs/{{ doc.fileSlug }}/" class="doc-card">
+      <h4>{{ doc.data.title }}</h4>
+      <p>{{ doc.data.description }}</p>
+    </a>
+    {% endif %}
+  {% endfor %}
+</div>
+
+<div class="section-label">Core Concepts</div>
+<div class="docs-grid">
+  {% for doc in collections.docs %}
+    {% if doc.data.section == "Core Concepts" %}
+    <a href="/docs/{{ doc.fileSlug }}/" class="doc-card">
+      <h4>{{ doc.data.title }}</h4>
+      <p>{{ doc.data.description }}</p>
+    </a>
+    {% endif %}
+  {% endfor %}
+</div>
+
+<div class="section-label">Reference</div>
+<div class="docs-grid">
+  {% for doc in collections.docs %}
+    {% if doc.data.section == "Reference" %}
+    <a href="/docs/{{ doc.fileSlug }}/" class="doc-card">
+      <h4>{{ doc.data.title }}</h4>
+      <p>{{ doc.data.description }}</p>
+    </a>
+    {% endif %}
+  {% endfor %}
+</div>

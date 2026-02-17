@@ -1,0 +1,44 @@
+---
+pagination:
+  data: collections.docs
+  size: 1
+  alias: doc
+permalink: "/docs/{{ doc.fileSlug }}/"
+layout: base.njk
+eleventyComputed:
+  title: "{{ doc.data.title }}"
+  description: "{{ doc.data.description }}"
+---
+
+<div class="doc-layout">
+  <aside class="doc-sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Getting Started</div>
+      {% for item in collections.docs %}
+        {% if item.data.section == "Getting Started" %}
+        <a href="/docs/{{ item.fileSlug }}/"{% if item.fileSlug == doc.fileSlug %} class="active"{% endif %}>{{ item.data.title }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Core Concepts</div>
+      {% for item in collections.docs %}
+        {% if item.data.section == "Core Concepts" %}
+        <a href="/docs/{{ item.fileSlug }}/"{% if item.fileSlug == doc.fileSlug %} class="active"{% endif %}>{{ item.data.title }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Reference</div>
+      {% for item in collections.docs %}
+        {% if item.data.section == "Reference" %}
+        <a href="/docs/{{ item.fileSlug }}/"{% if item.fileSlug == doc.fileSlug %} class="active"{% endif %}>{{ item.data.title }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </aside>
+  <article class="doc-content">
+    <h1>{{ doc.data.title }}</h1>
+    {{ doc.content | safe }}
+  </article>
+</div>

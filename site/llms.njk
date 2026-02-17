@@ -1,0 +1,21 @@
+---
+permalink: /llms.txt
+eleventyExcludeFromCollections: true
+---
+# {{ site.name }}
+
+> {{ site.description }}
+
+{{ site.name }} is a Go-based static site generator and structured data compiler. It reads entities with metadata, enriches them through an ordered pass pipeline, and emits output through pluggable backends.
+
+## Documentation
+
+{% for doc in collections.docs %}- [{{ doc.data.title }}]({{ site.base_url }}/docs/{{ doc.fileSlug }}/): {{ doc.data.description }}
+{% endfor %}
+
+## Links
+
+- Website: {{ site.base_url }}
+- Repository: {{ site.repo_url }}
+- Author: {{ site.author }} ({{ site.author_url }})
+- License: MIT

@@ -1,140 +1,164 @@
 ---
-title: "Structured Data and SEO"
-description: "SchemaFlux generates JSON-LD, Open Graph tags, sitemaps, RSS feeds, robots.txt, and llms.txt for comprehensive search engine optimization."
-section: "Concepts"
+title: Structured Data
+description: "JSON-LD schemas, Open Graph, sitemaps, RSS feeds, and SEO features."
+section: "Reference"
 tags:
-  - "seo"
-  - "json-ld"
-  - "structured-data"
-  - "sitemap"
-order: 7
-author: "Grey Newell"
+  - seo
+  - json-ld
+  - schema
+order: 8
 ---
 
-## Overview
+SchemaFlux automatically generates structured data and SEO metadata for every page it produces. This includes JSON-LD schemas embedded in page headers, Open Graph tags for social sharing, XML sitemaps for search engines, RSS feeds for subscribers, and specialized files like robots.txt and llms.txt.
 
-SchemaFlux generates a comprehensive suite of SEO artifacts as part of every build. These are produced by the compiler pipeline passes and the HTML backend, ensuring every page has proper metadata for search engines, social media crawlers, and AI systems.
+## JSON-LD Generation
 
-## JSON-LD
+JSON-LD (JavaScript Object Notation for Linked Data) is the structured data format recommended by Google for search engine optimization. SchemaFlux generates JSON-LD schema blocks for every entity page based on the `structured_data` configuration.
 
-Every page includes JSON-LD structured data in a `<script type="application/ld+json">` tag. The schema types are configurable per page type:
-
-### Homepage Schemas
-
-Default: `WebSite` + `ItemList`
-
-The WebSite schema includes the site name, URL, description, and a social sharing image. The ItemList schema lists featured or recent entities.
-
-### Entity Schemas
-
-Default: configurable (e.g., `Recipe`, `TechArticle`, `Article`)
-
-Entity schemas map frontmatter fields to Schema.org properties via `field_mappings`:
+The `schema` compiler pass reads the entity metadata and produces a schema.org-compliant JSON-LD object. The schema type is determined by the `type_map` configuration, which maps taxonomy terms to schema types:
 
 ```yaml
 structured_data:
-  entity_type: "Recipe"
-  field_mappings:
-    name: "title"
-    description: "description"
-    author: "author"
-    prepTime: "prep_time"
-    cookTime: "cook_time"
+  default_type: "Article"
+  type_map:
+    reviews: "Review"
+    products: "Product"
+    recipes: "Recipe"
+  organization:
+    name: "My Site"
+    url: "https://example.com"
+    logo: "https://example.com/logo.png"
 ```
 
-### Hub Page Schemas
+For an entity in the "reviews" category, SchemaFlux generates a JSON-LD block like this:
 
-Default: `CollectionPage` + `BreadcrumbList`
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Review",
+  "name": "Sony WH-1000XM5 Review",
+  "description": "A comprehensive review of the Sony WH-1000XM5...",
+  "url": "https://example.com/sony-wh-1000xm5-review/",
+  "datePublished": "2025-06-15",
+  "dateModified": "2025-07-01",
+  "author": {
+    "@type": "Person",
+    "name": "Your Name"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "My Site",
+    "url": "https://example.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://example.com/logo.png"
+    }
+  },
+  "reviewRating": {
+    "@type": "Rating",
+    "ratingValue": "4.5",
+    "bestRating": "5"
+  }
+}
+```
 
-Hub pages include a collection schema listing all entities in the group, plus breadcrumb navigation.
+The JSON-LD is embedded as a `<script type="application/ld+json">` tag in the HTML `<head>` element. You can output it in templates using the `jsonLD` function: `{{ "{{" }} .Entity | jsonLD {{ "}}" }}`.
 
-### Index Page Schemas
+## Supported Schema Types
 
-Default: `ItemList` + `BreadcrumbList`
+SchemaFlux maps entity data to these schema.org types:
 
-Taxonomy index pages list all taxonomy values as an ItemList.
+| Schema Type | Description | Key Properties |
+|-------------|-------------|----------------|
+| `Article` | Default for general content | headline, datePublished, author |
+| `Review` | For review entities with ratings | reviewRating, itemReviewed |
+| `Product` | For product entities | offers, brand, sku |
+| `Recipe` | For recipe entities | prepTime, cookTime, ingredients |
+| `HowTo` | For tutorial/guide entities | step, totalTime |
+| `FAQPage` | For FAQ entities | mainEntity with Q&A pairs |
 
-## Open Graph
+The schema pass automatically extracts the relevant properties from entity metadata. For example, a `Review` schema includes `reviewRating` built from the entity's `rating` field, and a `Product` schema includes `offers` built from the entity's `price` field.
 
-Every page includes Open Graph meta tags for social media sharing:
+## Open Graph Tags
+
+Open Graph tags control how your pages appear when shared on social media platforms like Facebook, LinkedIn, and Twitter. SchemaFlux generates Open Graph meta tags for every entity page:
 
 ```html
-<meta property="og:title" content="...">
-<meta property="og:description" content="...">
-<meta property="og:url" content="...">
-<meta property="og:type" content="...">
-<meta property="og:site_name" content="...">
-<meta property="og:image" content="...">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Sony WH-1000XM5 Review">
+<meta property="og:description" content="A comprehensive review...">
+<meta property="og:url" content="https://example.com/sony-wh-1000xm5-review/">
+<meta property="og:site_name" content="My Site">
+<meta property="og:image" content="https://example.com/images/sony-xm5.jpg">
 ```
 
-The `og:type` is set to `website` for the homepage and `article` for all other pages. Share images are generated as SVG files in `/images/share/`.
+Twitter Card tags are also generated for enhanced display on Twitter:
+
+```html
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sony WH-1000XM5 Review">
+<meta name="twitter:description" content="A comprehensive review...">
+<meta name="twitter:image" content="https://example.com/images/sony-xm5.jpg">
+```
+
+The image tag is only included if the entity has an `image` field in its frontmatter. Open Graph and Twitter Card generation can be individually enabled or disabled in the `seo` configuration.
 
 ## Sitemaps
 
-SchemaFlux generates XML sitemaps compliant with the sitemap protocol. Every page in the site is included with configurable priority and change frequency values:
+SchemaFlux generates an XML sitemap at `/sitemap.xml` listing all generated pages. The sitemap includes entity pages, taxonomy hub pages, taxonomy index pages, and the main index page.
 
 ```xml
-<url>
-  <loc>https://example.com/entity.html</loc>
-  <lastmod>2025-02-14</lastmod>
-  <changefreq>weekly</changefreq>
-  <priority>0.8</priority>
-</url>
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://example.com/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://example.com/sony-wh-1000xm5-review/</loc>
+    <lastmod>2025-07-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>
 ```
 
-Large sites automatically split into multiple sitemap files with a sitemap index, controlled by `sitemap.max_urls_per_file`.
+The sitemap uses the configured `changefreq` and `priority` values from the `sitemap` section of the configuration. If an entity has an `updated` date, it is used as the `lastmod` value.
 
 ## RSS Feeds
 
-When RSS is enabled, SchemaFlux generates:
+SchemaFlux generates an RSS 2.0 feed at `/feed.xml` containing the most recent entities. The feed includes entity titles, descriptions, links, and publication dates.
 
-- A **main feed** (`feed.xml`) containing all entities
-- **Category feeds** (one per taxonomy value) when `category_feeds` is true
+The number of entities included in the feed is controlled by the `feeds.rss.limit` configuration option (default: 50). Entities are included in date order with the most recent first.
 
-Feeds include entity titles, descriptions, URLs, and publication dates.
+RSS feeds allow users to subscribe to your site's content using feed readers and enable syndication by other platforms.
 
-## Robots.txt
+## robots.txt
 
-SchemaFlux generates a `robots.txt` file. When `allow_all` is true, all crawlers are permitted:
+When enabled in the configuration, SchemaFlux generates a `robots.txt` file that controls search engine crawler behavior:
 
 ```
 User-agent: *
 Allow: /
+
 Sitemap: https://example.com/sitemap.xml
 ```
 
-Additional bot directives can be added via `extra_bots` to explicitly allow AI crawlers like GPTBot, ClaudeBot, and PerplexityBot.
+The default configuration allows all crawlers to access all pages and points them to the sitemap. You can customize the robots.txt content through the configuration if you need to disallow specific paths or user agents.
 
-## LLMs.txt
+## llms.txt
 
-When `llms_txt.enabled` is true, SchemaFlux generates an `llms.txt` file following the emerging standard for AI-readable site summaries. The file includes:
+SchemaFlux generates an `llms.txt` file at the site root, following the emerging convention for providing machine-readable site summaries to large language models. The file contains the site name, description, and a structured list of all content pages with their URLs and descriptions.
 
-- Site name and tagline
-- A structured listing of all entities grouped by taxonomy
-- Direct URLs to entity pages
+This file helps AI assistants understand the scope and content of your site, improving the quality of AI-generated responses that reference your content. The format is plain text with a simple structure that any text-processing system can parse.
 
-This helps AI systems understand the site content without crawling every page.
+## Canonical URLs
 
-## Manifest.json
+Every generated page includes a canonical URL meta tag in the `<head>`:
 
-A PWA-compatible `manifest.json` is generated with the site name, description, and basic configuration.
+```html
+<link rel="canonical" href="https://example.com/sony-wh-1000xm5-review/">
+```
 
-## CNAME
-
-When `site.cname` is set, a `CNAME` file is written to the output directory for GitHub Pages custom domain configuration.
-
-## Search Index
-
-When `search.enabled` is true, a `search-index.json` file is generated containing a compact JSON array of entity metadata (title, description, slug, and configured fields). This powers client-side search functionality.
-
-## Share Images
-
-The HTML backend generates SVG share images for:
-
-- The homepage
-- Each taxonomy hub page
-- Each taxonomy index page
-- Each letter page
-- Each entity page (when applicable)
-
-These are written to `/images/share/` and referenced in Open Graph `og:image` tags.
+Canonical URLs prevent duplicate content issues when the same page is accessible through multiple URLs (for example, with and without trailing slashes, or through taxonomy listings). The canonical URL always points to the primary entity URL generated by the `url_resolve` pass.

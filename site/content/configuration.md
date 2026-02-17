@@ -1,283 +1,218 @@
 ---
-title: "Configuration Reference"
-description: "Complete reference for the schemaflux.yaml configuration file. Covers site settings, paths, data schema, taxonomies, pagination, structured data, and output options."
-section: "Reference"
+title: Configuration
+description: "Complete reference for the schemaflux.yaml configuration file."
+section: "Getting Started"
 tags:
-  - "config"
-  - "yaml"
-  - "reference"
-order: 3
-author: "Grey Newell"
+  - config
+  - yaml
+order: 2
 ---
 
-## Overview
+SchemaFlux is configured through a single YAML file, typically named `schemaflux.yaml`, located in the root of your project. This file controls every aspect of the build process, from site metadata to taxonomy definitions to structured data schemas.
 
-SchemaFlux is configured via a single `schemaflux.yaml` file. The config is parsed by an internal zero-dependency YAML parser and validated at load time. Relative paths are resolved against the directory containing the config file.
+## Site Configuration
 
-## Site
-
-Top-level metadata for the generated site:
+The `site` section defines global metadata for your site. These values are available in templates and are used to generate meta tags, structured data, and feed metadata.
 
 ```yaml
 site:
-  name: "My Site"           # Required. Site title.
-  base_url: "https://..."   # Required. Canonical base URL (no trailing slash).
-  description: "..."        # Site description for meta tags and feeds.
-  language: "en"            # BCP-47 language code. Default: "en".
-  version: "1.0.0"          # Version string displayed in footer/meta.
-  author: "Name"            # Author name for structured data.
-  author_url: "https://..." # Author URL for attribution links.
-  license: "MIT"            # License identifier.
-  cname: "example.com"      # Writes a CNAME file for GitHub Pages.
-  repo_url: "https://..."   # Repository URL for source links.
+  name: "My Site"
+  base_url: "https://example.com"
+  description: "A brief description of the site"
+  language: "en"
+  author: "Your Name"
+  author_url: "https://yoursite.com"
 ```
+
+The `base_url` field is critical because it is used to generate absolute URLs in sitemaps, RSS feeds, canonical tags, and Open Graph metadata. Always use the full URL including the protocol, without a trailing slash.
 
 ## Paths
 
-Directories for content, templates, and build output:
+The `paths` section tells SchemaFlux where to find inputs and where to write outputs.
 
 ```yaml
 paths:
-  data: "./content"          # Required. Directory containing .md entity files.
-  templates: "./templates"   # Template directory. Default: "templates".
-  output: "./output"         # Build output directory. Default: "docs".
-  cache: "./.cache"          # Cache directory. Default: ".cache".
-  static: "./static"         # Static assets copied to output root.
-  source_dir: "./src"        # Source code directory for code entity linking.
+  content: "content/"
+  templates: "templates/"
+  output: "dist/"
+  static: "static/"
 ```
 
-## Data
+| Field | Description | Default |
+|-------|-------------|---------|
+| `content` | Directory containing markdown entity files | `content/` |
+| `templates` | Directory containing Go HTML templates | `templates/` |
+| `output` | Directory where the built site is written | `dist/` |
+| `static` | Directory of static assets copied as-is | `static/` |
 
-Schema for entity markdown files:
-
-```yaml
-data:
-  format: "markdown"         # Content format. Default: "markdown".
-  entity_type: "recipe"      # Label for entities (used in page titles).
-  entity_slug:
-    source: "filename"       # Slug source: "filename" or "field:<name>".
-  body_sections:             # Named sections parsed from markdown body.
-    - name: "ingredients"
-      header: "Ingredients"
-      type: "unordered_list"  # unordered_list, ordered_list, faq, markdown
-    - name: "instructions"
-      header: "Instructions"
-      type: "ordered_list"
-  fields:                     # Optional field schema for validation.
-    - name: "title"
-      type: "string"
-      required: true
-    - name: "status"
-      type: "enum"
-      allowed:
-        - "draft"
-        - "published"
-      default: "published"
-```
-
-### Field Types
-
-| Type | Description |
-|------|-------------|
-| `string` | Text value |
-| `int` | Integer |
-| `float` | Floating-point number |
-| `bool` | Boolean (true/false) |
-| `date` | Date string |
-| `list` | Array of values |
-| `enum` | Constrained to `allowed` values |
+All paths are relative to the directory containing the configuration file. The output directory is completely replaced on each build, so do not store any hand-edited files there.
 
 ## Taxonomies
 
-Define how entities are grouped into browsable categories:
+Taxonomies define how entities are grouped and categorized. Each taxonomy creates hub pages that list all terms, index pages for each term listing its entities, and optional letter-based indices for alphabetical browsing.
 
 ```yaml
 taxonomies:
-  - name: "category"                    # URL-safe identifier.
-    label: "Categories"                 # Display name (plural).
-    label_singular: "Category"          # Singular form.
-    field: "category"                   # Frontmatter field to group by.
-    multi_value: false                  # True if field is a list.
-    min_entities: 1                     # Min entities to show a hub page.
-    letter_page_threshold: 50           # Entry count to enable A-Z pages.
-    hub_title: "{{.Name}} Recipes"      # Go template for hub page title.
-    hub_meta_description: "Browse..."   # Go template for hub meta desc.
-    index_description: "Browse by..."   # Description on taxonomy index.
+  - name: "categories"
+    field: "categories"
+    plural: "categories"
+    singular: "category"
+  - name: "tags"
+    field: "tags"
+    plural: "tags"
+    singular: "tag"
+  - name: "brands"
+    field: "brand"
+    plural: "brands"
+    singular: "brand"
+    multi_value: false
 ```
 
-Each taxonomy generates:
-
-- An **index page** listing all values
-- A **hub page** for each value (with pagination)
-- **Letter pages** if entries exceed `letter_page_threshold`
-
-## Pagination
-
-```yaml
-pagination:
-  entities_per_page: 48    # Entities per page on hub/listing pages.
-```
-
-## Structured Data
-
-JSON-LD and Open Graph configuration:
-
-```yaml
-structured_data:
-  entity_type: "Recipe"          # Schema.org type for entities.
-  field_mappings:                 # Map Schema.org fields to frontmatter.
-    name: "title"
-    description: "description"
-    author: "author"
-  extra_keywords:
-    - "keyword1"
-  date_published: "2025-01-01"
-  homepage_schemas:
-    - "WebSite"
-    - "ItemList"
-  entity_schemas:
-    - "Recipe"
-    - "BreadcrumbList"
-  hub_schemas:
-    - "CollectionPage"
-    - "BreadcrumbList"
-  index_schemas:
-    - "ItemList"
-    - "BreadcrumbList"
-```
+The `field` property maps to the frontmatter key in your entity files. By default, taxonomy fields are treated as multi-value (arrays), meaning an entity can belong to multiple terms. Set `multi_value: false` for single-value fields like "brand" or "author" where each entity has exactly one value.
 
 ## Templates
 
-Map page types to template filenames in the templates directory:
+The `templates` section configures which template files are used for different page types.
 
 ```yaml
 templates:
   entity: "entity.html"
-  homepage: "index.html"
+  index: "index.html"
   hub: "hub.html"
-  taxonomy_index: "taxonomy_index.html"
+  taxonomy_index: "taxonomy.html"
   letter: "letter.html"
-  all_entities: "all.html"
-  static_pages:
-    "about.html": "about.html"
+  partials:
+    - "_head.html"
+    - "_header.html"
+    - "_footer.html"
+    - "_styles.html"
+    - "_main.html"
 ```
 
-## Output
+Each template type serves a specific purpose. The `entity` template renders individual entity pages. The `index` template renders paginated listing pages. The `hub` template renders taxonomy hub pages showing all terms. The `taxonomy_index` template renders pages listing entities for a specific term. The `letter` template renders A-Z index pages.
 
-Build output options:
+## Structured Data
+
+The `structured_data` section controls JSON-LD schema generation for your entities.
 
 ```yaml
-output:
-  clean_build: false       # Delete output dir before building.
-  minify: false            # Minify HTML output.
-  extract_css: "styles.css" # Extract _styles.css to a standalone file.
-  extract_js: "main.js"    # Extract _main.js to a standalone file.
+structured_data:
+  default_type: "Article"
+  type_map:
+    reviews: "Review"
+    products: "Product"
+    recipes: "Recipe"
+  organization:
+    name: "My Organization"
+    url: "https://example.com"
+    logo: "https://example.com/logo.png"
 ```
 
-## Sitemap
+The `type_map` lets you assign different schema.org types based on taxonomy terms. If an entity belongs to the "reviews" category, it gets a `Review` schema. Otherwise, the `default_type` is used. The `organization` block is embedded in the schema as the publisher.
+
+## Sitemap and Feeds
+
+Configure sitemap and RSS feed generation:
 
 ```yaml
 sitemap:
-  max_urls_per_file: 50000
-  priorities:
-    homepage: "1.0"
-    entity: "0.8"
-    taxonomy_index: "0.7"
-    hub_page_1: "0.6"
-    hub_page_n: "0.4"
-    letter_page: "0.5"
-  change_freqs:
-    homepage: "daily"
-    entity: "weekly"
-    taxonomy_index: "weekly"
-    hub: "weekly"
-    letter_page: "weekly"
-```
-
-## RSS
-
-```yaml
-rss:
   enabled: true
-  main_feed: "feed.xml"
-  category_feeds: true
-  category_taxonomy: "category"
-```
+  changefreq: "weekly"
+  priority: 0.8
 
-## Robots
-
-```yaml
-robots:
-  allow_all: true
-  extra_bots:
-    - "GPTBot"
-    - "ClaudeBot"
-```
-
-## LLMs.txt
-
-```yaml
-llms_txt:
-  enabled: true
-  tagline: "Site description for AI crawlers."
-  taxonomies:
-    - "category"
-```
-
-## Search
-
-```yaml
-search:
-  enabled: true
-  fields:
-    - "title"
-    - "description"
-    - "tags"
-```
-
-## Sort
-
-```yaml
-sort:
-  field: "title"      # Frontmatter field to sort entities by.
-  order: "asc"        # "asc" or "desc".
-```
-
-## Related Entities
-
-```yaml
-related_entities:
-  enabled: true
-  max: 3              # Maximum related entities per page.
-```
-
-## Affiliates
-
-```yaml
-affiliates:
-  providers:
-    - name: "Amazon"
-      url_template: "https://amazon.com/s?k={{term}}&tag={{tag}}"
-      env_var: "AMAZON_AFFILIATE_TAG"
-    - name: "Walmart"
-      url_template: "https://walmart.com/search?q={{term}}"
-      always_include: true
-  search_term_paths:
-    - "ingredients[].searchTerm"
-```
-
-## Extra
-
-Arbitrary extra configuration accessible in templates via `.Extra`:
-
-```yaml
-extra:
-  cta:
+feeds:
+  rss:
     enabled: true
-    heading: "Get Started"
-    description: "Try SchemaFlux today."
-    button_text: "Install"
-    button_url: "/getting-started.html"
-  data:
-    custom_key: "custom_value"
+    title: "My Site RSS Feed"
+    limit: 50
+```
+
+The sitemap is generated as `sitemap.xml` in the output root, listing all entity pages and taxonomy pages with the configured change frequency and priority. RSS feeds are generated at `/feed.xml` and include the most recent entities up to the configured limit.
+
+## SEO Configuration
+
+The `seo` section provides additional control over search engine optimization features:
+
+```yaml
+seo:
+  robots_txt: true
+  llms_txt: true
+  open_graph: true
+  twitter_cards: true
+  canonical_urls: true
+```
+
+When `llms_txt` is enabled, SchemaFlux generates an `llms.txt` file in the output root, providing a machine-readable summary of your site content for large language models.
+
+## CTA Configuration
+
+The `cta` section lets you define call-to-action elements that are injected into entity pages:
+
+```yaml
+cta:
+  enabled: true
+  text: "Check the latest price"
+  position: "after_content"
+```
+
+This is useful for affiliate sites or product review sites where you want a consistent call-to-action across all entity pages.
+
+## Full Example
+
+Here is a complete configuration file showing all available options:
+
+```yaml
+site:
+  name: "My Review Site"
+  base_url: "https://reviews.example.com"
+  description: "In-depth reviews and comparisons"
+  language: "en"
+  author: "Your Name"
+
+paths:
+  content: "content/"
+  templates: "templates/"
+  output: "dist/"
+  static: "static/"
+
+taxonomies:
+  - name: "categories"
+    field: "categories"
+    plural: "categories"
+    singular: "category"
+  - name: "tags"
+    field: "tags"
+    plural: "tags"
+    singular: "tag"
+  - name: "brands"
+    field: "brand"
+    plural: "brands"
+    singular: "brand"
+    multi_value: false
+
+templates:
+  entity: "entity.html"
+  index: "index.html"
+  hub: "hub.html"
+  taxonomy_index: "taxonomy.html"
+  letter: "letter.html"
+
+structured_data:
+  default_type: "Article"
+  type_map:
+    reviews: "Review"
+
+sitemap:
+  enabled: true
+
+feeds:
+  rss:
+    enabled: true
+    limit: 50
+
+seo:
+  robots_txt: true
+  llms_txt: true
+  open_graph: true
+  canonical_urls: true
 ```

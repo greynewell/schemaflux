@@ -1,115 +1,137 @@
 ---
-title: "Taxonomies"
-description: "Taxonomies group entities by shared field values into browsable categories with automatic pagination, A-Z indices, and hub pages."
-section: "Concepts"
+title: Taxonomies
+description: "Grouping entities with taxonomies: categories, tags, and custom classification systems."
+section: "Reference"
 tags:
-  - "taxonomies"
-  - "grouping"
-  - "pagination"
-order: 6
-author: "Grey Newell"
+  - taxonomies
+  - categories
+order: 7
 ---
+
+Taxonomies in SchemaFlux are classification systems that group entities by shared attributes. Every taxonomy generates its own set of pages: a hub page listing all terms, individual index pages for each term, and optional A-Z letter pages for alphabetical browsing.
 
 ## What Are Taxonomies?
 
-Taxonomies are the primary organizational mechanism in SchemaFlux. A taxonomy groups entities by the value of a specific frontmatter field. For example, a "category" taxonomy groups entities by their `category` field, creating hub pages like `/category/tutorial.html`.
+A taxonomy is a named grouping system that maps frontmatter field values to sets of entities. The most common examples are categories and tags, but you can define any number of custom taxonomies for your domain.
 
-Each taxonomy automatically generates:
+When you assign taxonomy values to an entity through its frontmatter, SchemaFlux automatically groups that entity with all other entities sharing the same values. These groupings drive the generation of listing pages, navigation structures, and relationship scoring.
 
-- A **taxonomy index page** listing all values (e.g., `/category/`)
-- A **hub page** for each value with paginated entity listings (e.g., `/category/desserts.html`)
-- **Letter pages** for A-Z navigation when entries exceed the threshold (e.g., `/category/letter-a.html`)
+For a site reviewing consumer electronics, you might define taxonomies for categories (headphones, speakers, cameras), brands (Sony, Bose, Apple), and price ranges (budget, mid-range, premium). Each of these taxonomies generates its own navigation hierarchy.
 
 ## Configuration
 
-Taxonomies are declared in `schemaflux.yaml`:
+Taxonomies are defined in the `taxonomies` section of `schemaflux.yaml`:
 
 ```yaml
 taxonomies:
-  - name: "category"
-    label: "Categories"
-    label_singular: "Category"
-    field: "category"
+  - name: "categories"
+    field: "categories"
+    plural: "categories"
+    singular: "category"
+  - name: "tags"
+    field: "tags"
+    plural: "tags"
+    singular: "tag"
+  - name: "brands"
+    field: "brand"
+    plural: "brands"
+    singular: "brand"
     multi_value: false
-    min_entities: 1
-    letter_page_threshold: 50
-    hub_title: "{{.Name}} Recipes"
-    hub_meta_description: "Browse {{.Name}} recipes."
-    index_description: "Browse by category."
 ```
 
-### Fields
+Each taxonomy definition requires these fields:
 
 | Field | Description |
 |-------|-------------|
-| `name` | URL-safe identifier used in paths (e.g., `/category/`) |
-| `label` | Human-readable plural label |
-| `label_singular` | Singular form of the label |
-| `field` | Frontmatter field to group entities by |
-| `multi_value` | If true, the field is a list and entities can belong to multiple values |
-| `min_entities` | Minimum entities required for a hub page to be generated |
-| `letter_page_threshold` | Number of entries at which A-Z letter navigation is enabled |
+| `name` | Internal name used to reference the taxonomy |
+| `field` | The frontmatter field name to read values from |
+| `plural` | Plural label used in URLs and page titles |
+| `singular` | Singular label used in breadcrumbs and descriptions |
+| `multi_value` | Whether the field is an array (default: true) |
 
-### Template Strings
+The `name` is used internally and in URLs. The `field` maps to the frontmatter key in your entity files. The `plural` and `singular` forms are used in generated page titles and navigation labels.
 
-Hub titles and descriptions support Go template syntax with the following variables:
+## Multi-Value vs Single-Value
 
-- `{{.Name}}` -- the taxonomy value name (e.g., "Desserts")
-- `{{.Count}}` -- number of entities in this group
-
-## Single vs. Multi-Value
-
-**Single-value** taxonomies (`multi_value: false`) expect the frontmatter field to contain a single string:
+By default, taxonomy fields are treated as multi-value, meaning they expect an array of values in the frontmatter. An entity can belong to multiple categories or have multiple tags:
 
 ```yaml
-category: "Tutorial"
-```
-
-**Multi-value** taxonomies (`multi_value: true`) expect the frontmatter field to contain a list:
-
-```yaml
+---
+title: "Sony WH-1000XM5 Review"
+categories:
+  - "reviews"
+  - "headphones"
 tags:
-  - "go"
-  - "static-site"
-  - "compiler"
+  - "wireless"
+  - "noise-cancelling"
+  - "bluetooth"
+---
 ```
 
-An entity with multiple values appears in each corresponding hub page.
-
-## Pagination
-
-Hub pages are paginated based on `pagination.entities_per_page`. Each hub page shows a slice of entities with prev/next navigation and numbered page links.
-
-Page URLs follow the pattern:
-
-- Page 1: `/category/desserts.html`
-- Page 2: `/category/desserts-page-2.html`
-- Page N: `/category/desserts-page-N.html`
-
-## Letter Pages
-
-When a taxonomy has more entries than `letter_page_threshold`, the taxonomy index page shows A-Z navigation instead of a flat list. Each letter gets its own page listing entries that start with that letter.
-
-Letter page URLs: `/category/letter-a.html`, `/category/letter-b.html`, etc. Entries starting with numbers are grouped under a `#` page.
-
-## Taxonomy Pass
-
-The taxonomy grouping is handled by the `TaxonomyPass` in the compiler pipeline. It runs after slug resolution and sorting, and creates `TaxonomyGroup` entries in the IR. Each group contains:
-
-- The `Taxonomy` metadata (name, label, entries with entity counts)
-- A `ValidSlugs` map for fast slug lookups
-- Computed letter groups for A-Z navigation
-
-## Custom Templates
-
-Each taxonomy can override the default templates:
+For single-value fields, set `multi_value: false` in the taxonomy configuration. This is appropriate for fields like "brand" or "author" where each entity has exactly one value:
 
 ```yaml
-taxonomies:
-  - name: "category"
-    template: "category-hub.html"
-    index_template: "category-index.html"
-    letter_template: "category-letter.html"
+---
+title: "Sony WH-1000XM5 Review"
+brand: "Sony"
+---
 ```
 
-If not specified, taxonomies fall back to `hub.html`, `taxonomy_index.html`, and `letter.html` respectively.
+The difference affects how the taxonomy pass processes the field. Multi-value fields are iterated as arrays, with the entity added to the index for each value. Single-value fields are read as a single string.
+
+## Generated Pages
+
+Each taxonomy generates three types of pages:
+
+### Hub Pages
+
+The hub page is the top-level page for a taxonomy, listing all terms with their entity counts. For a "categories" taxonomy, the hub page lives at `/categories/` and shows all categories like "reviews (45 entities)", "guides (12 entities)", etc.
+
+Hub pages are rendered using the `hub` template and provide a navigational entry point into each taxonomy.
+
+### Index Pages
+
+Each taxonomy term gets its own index page listing all entities belonging to that term. For the "reviews" category, the index page lives at `/categories/reviews/` and lists all review entities in sort order.
+
+Index pages support pagination when the number of entities exceeds the configured page size. Paginated pages use URLs like `/categories/reviews/page/2/`.
+
+### Letter Pages
+
+Letter pages provide A-Z alphabetical navigation within a taxonomy. For the "categories" taxonomy, letter pages live at `/categories/letter/a/`, `/categories/letter/b/`, etc. Each page lists all terms starting with that letter.
+
+Letter pages are especially useful for taxonomies with many terms, like tags or brands, where alphabetical browsing is more practical than scrolling through a long list.
+
+## Taxonomy Terms in Templates
+
+In entity templates, you can access an entity's taxonomy values to render tag lists, category badges, or breadcrumb navigation:
+
+```html
+{{ "{{" }} if .Entity.Categories {{ "}}" }}
+<div class="categories">
+  {{ "{{" }} range .Entity.Categories {{ "}}" }}
+    <a href="/categories/{{ "{{" }} . | slugify {{ "}}" }}/">{{ "{{" }} . {{ "}}" }}</a>
+  {{ "{{" }} end {{ "}}" }}
+</div>
+{{ "{{" }} end {{ "}}" }}
+```
+
+In hub and taxonomy index templates, you access the full taxonomy data:
+
+```html
+<h1>{{ "{{" }} .Taxonomy.Plural {{ "}}" }}</h1>
+{{ "{{" }} range .Taxonomy.Terms {{ "}}" }}
+  <a href="{{ "{{" }} .URL {{ "}}" }}">{{ "{{" }} .Name {{ "}}" }} ({{ "{{" }} .Count {{ "}}" }})</a>
+{{ "{{" }} end {{ "}}" }}
+```
+
+## Taxonomies and Relationships
+
+Taxonomies are the foundation of the relationship system in SchemaFlux. The `related` pass uses shared taxonomy terms to compute relatedness scores between entities. Two entities sharing a category are considered more related than two entities sharing only a tag, because categories typically represent broader topical groupings.
+
+The relationship weights can be configured so that different taxonomies contribute differently to relatedness scores. This allows you to tune the "Related Articles" sections on your entity pages to surface the most relevant content.
+
+## Best Practices
+
+Define taxonomies that reflect how your audience thinks about your content. Categories should be broad, mutually exclusive groupings that help users navigate to content areas. Tags should be specific, descriptive labels that help users find content on narrow topics. Custom taxonomies like brands or formats should map to real-world classification schemes that users already understand.
+
+Keep taxonomy term names consistent. Use lowercase, avoid abbreviations, and prefer plural forms for multi-entity groupings. SchemaFlux normalizes terms to lowercase during processing, but consistent naming in your source files makes the content easier to maintain.

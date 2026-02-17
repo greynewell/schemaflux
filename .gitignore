@@ -4,4 +4,7 @@ docs/
 .cache/
 sites/
 *-output/
-site/output/
+
+# Site build output
+site/_site/
+site/node_modules/
