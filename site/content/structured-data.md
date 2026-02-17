@@ -11,6 +11,8 @@ order: 8
 
 SchemaFlux automatically generates structured data and SEO metadata for every page it produces. This includes JSON-LD schemas embedded in page headers, Open Graph tags for social sharing, XML sitemaps for search engines, RSS feeds for subscribers, and specialized files like robots.txt and llms.txt.
 
+For a live example of SchemaFlux-style structured data output, see [mcpbr.org](https://mcpbr.org) — a benchmark runner site with JSON-LD schemas on every page including SoftwareApplication, HowTo, FAQPage, and BreadcrumbList.
+
 ## JSON-LD Generation
 
 JSON-LD (JavaScript Object Notation for Linked Data) is the structured data format recommended by Google for search engine optimization. SchemaFlux generates JSON-LD schema blocks for every entity page based on the `structured_data` configuration.

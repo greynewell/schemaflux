@@ -8,6 +8,13 @@ layout: base.njk
 eleventyComputed:
   title: "{{ doc.data.title }}"
   description: "{{ doc.data.description }}"
+  headExtra: |
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"TechArticle","headline":"{{ doc.data.title | safe }}","description":"{{ doc.data.description | safe }}","url":"https://schemaflux.dev/docs/{{ doc.fileSlug }}/","author":{"@type":"Person","@id":"https://greynewell.com/#identity","name":"Grey Newell","url":"https://greynewell.com"},"publisher":{"@type":"Person","@id":"https://greynewell.com/#identity","name":"Grey Newell","url":"https://greynewell.com"},"isPartOf":{"@type":"WebSite","name":"SchemaFlux","url":"https://schemaflux.dev"}}
+    </script>
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://schemaflux.dev/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://schemaflux.dev/docs/"},{"@type":"ListItem","position":3,"name":"{{ doc.data.title | safe }}"}]}
+    </script>
 ---
 
 <div class="doc-layout">
